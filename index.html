@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v20</title>
+<title>CPE — Contas por Empresa v21</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v20">
+<meta name="rf-versao" content="v21">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v20',
+  versao : 'v21',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -694,6 +694,71 @@ async function lerDocumento(){
   }catch(e){ statusLeitura('Não deu para ler: '+e.message+'. Preencha à mão — o arquivo continua anexado.'); }
 }
 
+async function itensDoPDF(file, maxPag){
+  if(!window.pdfjsLib) return [];
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data:buf }).promise;
+  const itens = [];
+  const n = Math.min(pdf.numPages, maxPag || 30);
+  for(let i=1;i<=n;i++){
+    const pg = await pdf.getPage(i);
+    const c = await pg.getTextContent();
+    c.items.forEach(it=>{
+      const str = String(it.str||'').trim();
+      if(!str) return;
+      itens.push({ pag:i, x:it.transform[4], y:it.transform[5], str,
+                   ordem: i*100000 - it.transform[5] });   // posição vertical contínua
+    });
+  }
+  itens.sort((a,b)=> a.ordem - b.ordem || a.x - b.x);
+  return itens;
+}
+
+/* Monta os lançamentos pelas COLUNAS, não pelas linhas.
+   Num extrato a data fica na coluna da esquerda e pode estar alguns pontos
+   acima ou abaixo da descrição — por isso cada pedaço é ligado à data MAIS
+   PRÓXIMA na vertical, e não à linha em que caiu. */
+function extratoDosItens(itens){
+  const reDataSo = /^\d{2}\/\d{2}\/\d{4}$/;
+  const reMoeda  = /^(-\s*)?R\$\s*([\d.]+,\d{2})$/;
+  const datas = itens.filter(i=> reDataSo.test(i.str) && i.x < 80);
+  if(!datas.length) return [];
+
+  const recs = datas.map(d=>{
+    const p = d.str.split('/');
+    return { ordem:d.ordem, pag:d.pag, data:p[2]+'-'+p[1]+'-'+p[0], desc:[], moedas:[] };
+  });
+
+  itens.forEach(it=>{
+    if(reDataSo.test(it.str) && it.x < 80) return;
+    if(it.x < 80) return;                                  // coluna da data: ignora o resto
+    let melhor = null, dist = 1e9;
+    recs.forEach(r=>{
+      if(r.pag !== it.pag) return;
+      const d = Math.abs(r.ordem - it.ordem);
+      if(d < dist){ dist = d; melhor = r; }
+    });
+    if(!melhor || dist > 14) return;                       // fora da faixa da transação
+    const m = it.str.match(reMoeda);
+    if(m) melhor.moedas.push({ x:it.x, neg:!!m[1], v:extratoValor(m[2]) });
+    else melhor.desc.push({ ordem:it.ordem, x:it.x, s:it.str });
+  });
+
+  const out = [];
+  recs.forEach(r=>{
+    r.moedas.sort((a,b)=>a.x-b.x);
+    if(!r.moedas.length) return;
+    const val = r.moedas[0];
+    r.desc.sort((a,b)=> a.ordem-b.ordem || a.x-b.x);
+    const desc = extratoLimpa(r.desc.map(d=>d.s).join(' '));
+    if(!val.v || !extratoValido(desc)) return;
+    out.push({ data:r.data, descricao:desc.slice(0,140),
+               contraparte:((desc.match(/\/\s*([^)]{3,80})\)/)||[])[1]||'').trim(),
+               valor:val.v, tipo: val.neg ? 'saida' : 'entrada' });
+  });
+  return out;
+}
+
 async function linhasDoPDF(file, maxPag){
   if(!window.pdfjsLib) return [];
   const buf = await file.arrayBuffer();
@@ -1111,11 +1176,13 @@ async function lerExtrato(){
   if(!f) return;
   statusExtrato('Lendo o extrato…');
   try{
+    const itens = await itensDoPDF(f, 30);
     const texto = await textoDoPDF(f, 30);
     if(!texto || texto.replace(/\s/g,'').length < 60)
       return statusExtrato('<span style="color:var(--vermelho)">Esse PDF não tem texto (deve ser escaneado). Peça o extrato em PDF direto do banco.</span>');
     const cab = extratoCabecalho(texto);
-    const linhas = extratoLinhas(texto);
+    let linhas = extratoDosItens(itens);            // pelas colunas (preciso)
+    if(linhas.length < 2) linhas = extratoLinhas(texto);   // reserva
     if(!linhas.length){
       const amostra = texto.split(/\n/).filter(x=>x.trim()).slice(3,9).join(' ⏎ ').slice(0,400);
       return statusExtrato('<span style="color:var(--vermelho)">Não reconheci nenhum lançamento nesse arquivo.</span>'+
