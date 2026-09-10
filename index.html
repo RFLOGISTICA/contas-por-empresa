@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v17</title>
+<title>CPE — Contas por Empresa v18</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v17">
+<meta name="rf-versao" content="v18">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v17',
+  versao : 'v18',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -694,19 +694,38 @@ async function lerDocumento(){
   }catch(e){ statusLeitura('Não deu para ler: '+e.message+'. Preencha à mão — o arquivo continua anexado.'); }
 }
 
-async function textoDoPDF(file, maxPag){
-  if(!window.pdfjsLib) return '';
+async function linhasDoPDF(file, maxPag){
+  if(!window.pdfjsLib) return [];
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data:buf }).promise;
-  let txt = '';
+  const linhas = [];
   const n = Math.min(pdf.numPages, maxPag || 3);
   for(let i=1;i<=n;i++){
     const pg = await pdf.getPage(i);
     const c = await pg.getTextContent();
-    txt += c.items.map(x=>x.str).join(' ') + '\n';
+    // agrupa os pedaços por altura (y) — remonta a linha como ela aparece na página
+    const grupos = [];
+    c.items.forEach(it=>{
+      const x = it.transform[4], y = Math.round(it.transform[5]);
+      let g = grupos.find(gg=>Math.abs(gg.y - y) <= 2);
+      if(!g){ g = { y, partes:[] }; grupos.push(g); }
+      g.partes.push({ x, str: it.str });
+    });
+    grupos.sort((a,b)=> b.y - a.y);                       // no PDF o y cresce para cima
+    grupos.forEach(g=>{
+      g.partes.sort((a,b)=> a.x - b.x);
+      const txt = g.partes.map(p=>p.str).join(' ').replace(/\s+/g,' ').trim();
+      if(txt) linhas.push(txt);
+    });
   }
-  return txt;
+  return linhas;
 }
+
+async function textoDoPDF(file, maxPag){
+  const linhas = await linhasDoPDF(file, maxPag);
+  return linhas.join('\n');
+}
+
 function extrairDoTexto(t){
   const d = {};
   const mc = t.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/g);
@@ -981,30 +1000,72 @@ function extratoCabecalho(t){
 }
 
 function extratoLinhas(t){
+  const bruto = String(t||'');
+  const porLinha = extratoPorLinha(bruto.split(/\n/));
+  if(porLinha.length) return porLinha;
+  return extratoCorrido(bruto);           // reserva: texto sem quebra de linha
+}
+
+function extratoValor(v){ return Number(String(v).replace(/\./g,'').replace(',','.')); }
+function extratoLimpa(d){
+  return String(d||'').replace(/\s+/g,' ')
+    .replace(/CENTRAL DE RELACIONAMENTO[^]*$/i,'')
+    .replace(/0800[^]*$/i,'')
+    .replace(/Saldo no final[^]*$/i,'')
+    .replace(/P[áa]g\.?\s*\d+\s*\/?\s*\d*/gi,'').trim();
+}
+function extratoValido(desc){
+  if(extratoLimpa(desc).replace(/[^A-Za-zÀ-ÿ]/g,'').length < 4) return false;
+  return !/Extrato|Per[ií]odo|Solicitado|Saldo em|Saldo atual|Total Dispon|Limite de/i.test(desc);
+}
+
+function extratoPorLinha(linhas){
+  const out = [];
+  const re = /^(\d{2}\/\d{2}\/\d{4})\s+(.*?)\s*(-\s*)?R\$\s*([\d.]+,\d{2})\s+(-\s*)?R\$\s*([\d.]+,\d{2})\s*$/;
+  linhas.forEach(ln=>{
+    const l = String(ln||'').replace(/\s+/g,' ').trim();
+    const m = l.match(re);
+    if(m){
+      const desc = extratoLimpa(m[2]);
+      const valor = extratoValor(m[4]);
+      if(valor && extratoValido(desc)){
+        const p = m[1].split('/');
+        out.push({ data:p[2]+'-'+p[1]+'-'+p[0], descricao:desc.slice(0,140),
+                   contraparte:'', valor, tipo: m[3] ? 'saida' : 'entrada' });
+      }
+      return;
+    }
+    // linha sem data e sem valor: é a continuação da descrição da anterior
+    if(out.length && !/R\$/.test(l) && !/^\d{2}\/\d{2}\/\d{4}/.test(l)){
+      const extra = extratoLimpa(l);
+      if(extra && extra.length > 2 && /[A-Za-zÀ-ÿ]/.test(extra)){
+        const u = out[out.length-1];
+        u.descricao = (u.descricao+' '+extra).replace(/\s+/g,' ').slice(0,140);
+      }
+    }
+  });
+  out.forEach(l=>{ l.contraparte = ((l.descricao.match(/\/\s*([^)]{3,80})\)/)||[])[1]||'').trim(); });
+  return out.filter(l=>extratoValido(l.descricao));
+}
+
+function extratoCorrido(t){
   let plano = String(t||'').replace(/\s+/g,' ');
   const ini = plano.search(/Data\s+Lan[çc]amentos/i);
   if(ini > 0) plano = plano.slice(ini);
-  plano = plano.replace(/CENTRAL DE RELACIONAMENTO[^]*?OUVIDORIA:?\s*\d+/gi,' ')
-               .replace(/Data\s+Lan[çc]amentos\s+Valor\s*\(R\$\)\s+Saldo\s*\(R\$\)/gi,' ');
-  const linhas = [];
+  plano = plano.replace(/CENTRAL DE RELACIONAMENTO[^]*?OUVIDORIA:?\s*\d+/gi,' ');
+  const out = [];
   const re = /(\d{2}\/\d{2}\/\d{4})\s+(.*?)\s*(-\s*)?R\$\s*([\d.]+,\d{2})\s+(-\s*)?R\$\s*([\d.]+,\d{2})\s*([^]*?)(?=\d{2}\/\d{2}\/\d{4}\s|$)/g;
   let m;
   while((m = re.exec(plano)) !== null){
-    let desc = ((m[2]||'')+' '+(m[7]||'')).replace(/\s+/g,' ')
-      .replace(/CENTRAL DE RELACIONAMENTO[^]*$/i,'')
-      .replace(/0800[^]*$/i,'')
-      .replace(/Saldo no final[^]*$/i,'')
-      .replace(/P[áa]g\.?\s*\d+\s*\/?\s*\d*/gi,'').trim();
-    if(desc.replace(/[^A-Za-zÀ-ÿ]/g,'').length < 4) continue;
-    if(/Extrato|Per[ií]odo|Solicitado|Saldo em/i.test(desc)) continue;
-    const valor = Number(String(m[4]).replace(/\./g,'').replace(',','.'));
-    if(!valor) continue;
+    const desc = extratoLimpa((m[2]||'')+' '+(m[7]||''));
+    const valor = extratoValor(m[4]);
+    if(!valor || !extratoValido(desc)) continue;
     const p = m[1].split('/');
-    const contra = (desc.match(/\/\s*([^)]{3,80})\)/)||[])[1] || '';
-    linhas.push({ data:p[2]+'-'+p[1]+'-'+p[0], descricao:desc.slice(0,140),
-                  contraparte:(contra||'').trim(), valor, tipo: m[3] ? 'saida' : 'entrada' });
+    out.push({ data:p[2]+'-'+p[1]+'-'+p[0], descricao:desc.slice(0,140),
+               contraparte:((desc.match(/\/\s*([^)]{3,80})\)/)||[])[1]||'').trim(),
+               valor, tipo: m[3] ? 'saida' : 'entrada' });
   }
-  return linhas;
+  return out;
 }
 
 async function lerExtrato(){
@@ -1018,8 +1079,11 @@ async function lerExtrato(){
       return statusExtrato('<span style="color:var(--vermelho)">Esse PDF não tem texto (deve ser escaneado). Peça o extrato em PDF direto do banco.</span>');
     const cab = extratoCabecalho(texto);
     const linhas = extratoLinhas(texto);
-    if(!linhas.length)
-      return statusExtrato('<span style="color:var(--vermelho)">Não reconheci nenhum lançamento nesse arquivo.</span>');
+    if(!linhas.length){
+      const amostra = texto.split(/\n/).filter(x=>x.trim()).slice(3,9).join(' ⏎ ').slice(0,400);
+      return statusExtrato('<span style="color:var(--vermelho)">Não reconheci nenhum lançamento nesse arquivo.</span>'+
+        '<div style="margin-top:8px;font-size:11.5px;color:var(--fraco)"><b>O que eu li:</b><br>'+esc(amostra)+'</div>');
+    }
 
     // já lançados antes (mesma data + valor + descrição)
     const jaTem = new Set(S.movimentos.map(m=>m.data_movimento+'|'+Number(m.valor).toFixed(2)+'|'+(m.descricao||'').slice(0,60)));
