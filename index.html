@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v15</title>
+<title>CPE — Contas por Empresa v16</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v15">
+<meta name="rf-versao" content="v16">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v15',
+  versao : 'v16',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -671,7 +671,16 @@ async function lerDocumento(){
   try{
     let dados = null;
     if(f.type === 'application/pdf' || /\.pdf$/i.test(f.name)){
-      const texto = await textoDoPDF(f);
+      const texto = await textoDoPDF(f, 30);
+      // extrato não é nota: tem vários lançamentos e não cabe num lançamento só
+      const linhasExtrato = extratoLinhas(texto||'');
+      if(linhasExtrato.length >= 5){
+        _arquivoPendente = null;
+        const e = document.getElementById('mv-arq'); if(e) e.value = '';
+        statusLeitura('<b>Isso parece um extrato</b>, com '+linhasExtrato.length+' lançamentos — não dá para virar um lançamento só.<br>'+
+          '<button class="bt mini" style="margin-top:8px" onclick="fecharModal();irPara(\'origens\');abrirExtrato()">Abrir a importação de extrato</button>');
+        return;
+      }
       if(texto && texto.replace(/\s/g,'').length > 40){ dados = extrairDoTexto(texto); statusLeitura('Lido do PDF (sem custo de IA).'); }
     }
     if(!dados){
