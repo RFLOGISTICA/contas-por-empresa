@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v22</title>
+<title>CPE — Contas por Empresa v23</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v22">
+<meta name="rf-versao" content="v23">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v22',
+  versao : 'v23',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -458,7 +458,12 @@ function telaFila(){
     return '<div style="border:1px solid var(--linha);border-radius:10px;padding:11px;margin-bottom:9px">'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
         '<div style="flex:1;min-width:200px"><b>'+esc(m.fornecedor||m.descricao||'(sem descrição)')+'</b>'+
-          '<div style="color:var(--fraco);font-size:12px">'+dataBR(m.data_movimento)+' · '+brl(m.valor)+
+          '<div style="font-size:19px;font-weight:700;margin:2px 0;color:'+
+            (m.tipo==='entrada'?'var(--verde)':'var(--vermelho)')+'">'+
+            (m.tipo==='entrada'?'+ ':'− ')+brl(m.valor)+
+            ' <span style="font-size:11px;font-weight:500;letter-spacing:.5px">'+
+            (m.tipo==='entrada'?'ENTRADA':'SAÍDA')+'</span></div>'+
+          '<div style="color:var(--fraco);font-size:12px">'+dataBR(m.data_movimento)+
           ' · '+esc(nomeOrigem(m.origem_id))+'</div>'+
           (m.cnpj_fornecedor? '<div style="color:var(--fraco);font-size:11px">'+esc(mascaraCNPJ(m.cnpj_fornecedor))+'</div>':'')+
         '</div>'+
