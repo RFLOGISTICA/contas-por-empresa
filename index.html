@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v19</title>
+<title>CPE — Contas por Empresa v20</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v19">
+<meta name="rf-versao" content="v20">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v19',
+  versao : 'v20',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -991,6 +991,14 @@ function abrirExtrato(){
 }
 function statusExtrato(t){ const e=document.getElementById('ex-status'); if(e) e.innerHTML=t; }
 
+function extratoSaldos(t){
+  const plano = String(t||'').replace(/\s+/g,' ');
+  const ini = plano.match(/Saldo em\s+\d{2}\/\d{2}\/\d{4}:?\s*(-\s*)?R\$\s*([\d.]+,\d{2})/i);
+  const fim = plano.match(/Saldo (?:atual|no final do per[ií]odo)\s*:?\s*(-\s*)?R\$\s*([\d.]+,\d{2})/i);
+  const n = m => m ? (m[1]?-1:1) * Number(m[2].replace(/\./g,'').replace(',','.')) : null;
+  return { inicial: n(ini), final: n(fim) };
+}
+
 function extratoCabecalho(t){
   const plano = String(t||'').replace(/\s+/g,' ');
   const banco = (plano.match(/\b(UNICRED|BRADESCO|ITA[UÚ]|SANTANDER|BANCO DO BRASIL|CAIXA|NUBANK|INTER|SICOOB|SICREDI|C6|BTG|SAFRA)\b/i)||[])[1] || '';
@@ -1029,7 +1037,11 @@ function extratoPorLinha(linhas){
 
   function fechar(){
     if(atual && atual.valor){
-      const desc = extratoLimpa(atual.desc);
+      // o pdf.js pode entregar os pedaços fora de ordem: o tipo do lançamento vai na frente
+      const chefe = /^(DEBITO|CREDITO|LIQUIDACAO|TRANSFERENCIA|SEGURO|ARRECADACAO|IOF|JUROS|TARIFA|PAGAMENTO|SAQUE|DEPOSITO|COMPRA|ESTORNO)/i;
+      const partes = atual.partes.filter(x=>x && x.trim());
+      partes.sort((a,b)=> (chefe.test(b.trim())?1:0) - (chefe.test(a.trim())?1:0));
+      const desc = extratoLimpa(partes.join(' '));
       if(extratoValido(desc)){
         out.push({ data:atual.data, descricao:desc.slice(0,140),
                    contraparte:((desc.match(/\/\s*([^)]{3,80})\)/)||[])[1]||'').trim(),
@@ -1054,7 +1066,7 @@ function extratoPorLinha(linhas){
     if(md){                                   // linha nova de lançamento
       fechar();
       const p = md[1].split('/');
-      atual = { data:p[2]+'-'+p[1]+'-'+p[0], desc: semMoeda.replace(reData,'').trim(), valor:null, tipo:'saida' };
+      atual = { data:p[2]+'-'+p[1]+'-'+p[0], partes:[semMoeda.replace(reData,'').trim()], valor:null, tipo:'saida' };
       if(moedas.length){ atual.valor = moedas[0].v; atual.tipo = moedas[0].neg ? 'saida' : 'entrada'; }
       return;
     }
@@ -1062,11 +1074,11 @@ function extratoPorLinha(linhas){
     if(moedas.length && !atual.valor){         // o valor veio numa linha só dele
       atual.valor = moedas[0].v;
       atual.tipo  = moedas[0].neg ? 'saida' : 'entrada';
-      if(semMoeda) atual.desc = (atual.desc+' '+semMoeda).trim();
+      if(semMoeda) atual.partes.push(semMoeda);
       return;
     }
     if(!moedas.length && /[A-Za-zÀ-ÿ]/.test(semMoeda)){   // continuação da descrição
-      atual.desc = (atual.desc+' '+semMoeda).trim();
+      atual.partes.push(semMoeda);
     }
   });
   fechar();
@@ -1117,10 +1129,21 @@ async function lerExtrato(){
     _extrato = { cab, linhas };
     const ent = linhas.filter(x=>x.tipo==='entrada'), sai = linhas.filter(x=>x.tipo==='saida');
     const rep = linhas.filter(x=>x.repetido).length;
+    const sal = extratoSaldos(texto);
+    let conferencia = '';
+    if(sal.inicial != null && sal.final != null){
+      const calc = sal.inicial + ent.reduce((s,x)=>s+x.valor,0) - sai.reduce((s,x)=>s+x.valor,0);
+      const dif = Math.round((calc - sal.final)*100)/100;
+      conferencia = Math.abs(dif) < 0.01
+        ? '<div class="ok">Conferência: fecha com o extrato. Saldo '+brl(sal.final)+'.</div>'
+        : '<div class="erro">Conferência: <b>não fecha</b> — diferença de '+brl(Math.abs(dif))+
+          '. Deve faltar algum lançamento; confira antes de importar (saldo do extrato: '+brl(sal.final)+', calculado: '+brl(calc)+').</div>';
+    }
     const nomeSug = [cab.banco, cab.conta].filter(Boolean).join(' · ') || (cab.titular||'Conta');
 
     statusExtrato('Lido do PDF, sem custo de IA.');
     document.getElementById('ex-corpo').innerHTML =
+      conferencia+
       '<div class="kpis" style="margin:12px 0">'+
         kpi('Lançamentos', linhas.length)+
         kpi('Entradas', ent.length+' · '+brl(ent.reduce((s,x)=>s+x.valor,0)))+
