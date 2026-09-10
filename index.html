@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v13</title>
+<title>CPE — Contas por Empresa v14</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v13">
+<meta name="rf-versao" content="v14">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v13',
+  versao : 'v14',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -521,7 +521,8 @@ function telaOrigens(){
 /* ---------- EMPRESAS ---------- */
 function telaEmpresas(){
   let h = '<div class="card"><h3>EMPRESAS</h3>'+
-    (podeUsuarios()? '<button class="bt" onclick="abrirEmpresa()">+ Nova empresa</button>':'');
+    (podeUsuarios()? '<button class="bt" onclick="abrirEmpresa()">+ Nova empresa</button> '+
+      '<button class="bt g" onclick="abrirEmpresaAnexo()">📎 Cadastrar por documento</button>':'');
   if(!S.empresas.length) return h+'<div class="vazio">Nenhuma empresa cadastrada.</div></div>';
   h += '<table style="margin-top:12px"><thead><tr><th>CNPJ</th><th>Razão social</th><th>Apelido</th>'+
        '<th style="text-align:right">Movimentos</th><th></th></tr></thead><tbody>'+
@@ -839,6 +840,83 @@ async function verAnexo(path){
 }
 
 /* --- empresa --- */
+function abrirEmpresaAnexo(){
+  abrirModal('<h2>Cadastrar por documento</h2>'+
+    '<div class="aviso">Anexe a foto ou o PDF de uma nota de serviço, cartão CNPJ ou contrato social. '+
+    'O sistema lê o CNPJ e a razão social e preenche o cadastro — você só confere e salva.</div>'+
+    '<input type="file" id="ea-arq" accept="image/*,application/pdf" onchange="lerDocEmpresa()">'+
+    '<div id="ea-status" style="font-size:12.5px;color:var(--fraco);margin-top:10px"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+      '<button class="bt g" onclick="fecharModal()">Cancelar</button></div>');
+}
+function statusEmpresa(t){ const e=document.getElementById('ea-status'); if(e) e.innerHTML=t; }
+
+async function lerDocEmpresa(){
+  const inp = document.getElementById('ea-arq');
+  const f = inp && inp.files && inp.files[0];
+  if(!f) return;
+  statusEmpresa('Lendo o documento…');
+  try{
+    let d = null;
+    if(f.type === 'application/pdf' || /\.pdf$/i.test(f.name)){
+      const texto = await textoDoPDF(f);
+      if(texto && texto.replace(/\s/g,'').length > 40){ d = empresaDoTexto(texto);
+        if(d) statusEmpresa('Lido do PDF (sem custo de IA).'); }
+    }
+    if(!d){
+      statusEmpresa('Mandando para a leitura por IA…');
+      const { b64, kb } = await fileParaBase64(f);
+      statusEmpresa('Arquivo lido ('+kb+' KB). Lendo…');
+      const { data, error } = await sb.functions.invoke('ler-empresa', {
+        body:{ arquivoBase64:b64, mimeType:f.type||'image/jpeg', nome:f.name }
+      });
+      if(error){
+        let msg = error.message||String(error);
+        try{ const j = await error.context.json(); if(j&&(j.erro||j.error)) msg=j.erro||j.error; }catch(e){}
+        throw new Error(msg);
+      }
+      d = data && data.cnpj ? { cnpj:soDig(data.cnpj), razao:data.razao_social, fantasia:data.nome_fantasia } : null;
+      if(!d && data && data.resultado){
+        const p = String(data.resultado).split('|').map(x=>x.trim());
+        if(soDig(p[0]).length===14) d = { cnpj:soDig(p[0]), razao:p[1], fantasia:p[2] };
+      }
+    }
+    if(!d) return statusEmpresa('<span style="color:var(--vermelho)">Não consegui achar um CNPJ nesse documento. Cadastre pelo botão "+ Nova empresa".</span>');
+    if(!validaCNPJ(d.cnpj)) return statusEmpresa('<span style="color:var(--vermelho)">O CNPJ lido ('+esc(mascaraCNPJ(d.cnpj))+') não passa na validação dos dígitos. Confira o documento.</span>');
+    const ja = S.empresas.find(x=>soDig(x.cnpj)===d.cnpj);
+    if(ja) return statusEmpresa('Essa empresa já está cadastrada como <b>'+esc(ja.apelido||ja.razao_social)+'</b>.');
+    // abre o cadastro já preenchido
+    abrirEmpresa();
+    setTimeout(()=>{
+      const c=document.getElementById('em-cnpj'), r=document.getElementById('em-razao'), a=document.getElementById('em-apelido');
+      if(c) c.value = mascaraCNPJ(d.cnpj);
+      if(r) r.value = d.razao||'';
+      if(a) a.value = (d.fantasia||d.razao||'').split(' ').slice(0,2).join(' ');
+    }, 30);
+  }catch(e){ statusEmpresa('<span style="color:var(--vermelho)">Não deu para ler: '+esc(e.message)+'</span>'); }
+}
+
+function empresaDoTexto(t){
+  const achados = (t.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/g)||[]).map(soDig).filter(validaCNPJ);
+  if(!achados.length) return null;
+  const cnpj = achados[0];
+  // corta no próximo rótulo, porque o pdf.js junta tudo numa linha só
+  const cortar = (txt)=> String(txt||'')
+      .split(/\s*(?:Nome\s*Fantasia|CPF\s*\/?\s*CNPJ|CNPJ|Inscri[cç][aã]o|Endere[cç]o|Email|E-mail|Fone|Simples\s*Nacional|Incentivador)\b/i)[0]
+      .replace(/\s{2,}/g,' ').trim().slice(0,90);
+  let razao = '';
+  const m = t.match(/Raz[aã]o\s*Social[:\s]*(.{5,150})/i);
+  if(m) razao = cortar(m[1]);
+  if(!razao){
+    const ln = t.split(/\s{2,}|\n/).map(x=>x.trim()).find(x=>/LTDA|EIRELI|S\/A|S\.A|ME$/i.test(x) && x.length>6);
+    if(ln) razao = ln.slice(0,90);
+  }
+  let fantasia = '';
+  const mf = t.match(/Nome\s*Fantasia[:\s]*(.{3,120})/i);
+  if(mf) fantasia = cortar(mf[1]);
+  return { cnpj, razao, fantasia };
+}
+
 function abrirEmpresa(id){
   const e = id ? S.empresas.find(x=>x.id===id) : null;
   abrirModal('<h2>'+(e?'Editar empresa':'Nova empresa')+'</h2>'+
@@ -968,7 +1046,7 @@ async function acaoUsuario(acao, id, extra){
 Object.assign(window, {
   entrar, sair, salvarChave, trocarTema, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
   alternarPago, excluirMov, lerDocumento, verAnexo, fecharModal,
-  abrirEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem,
+  abrirEmpresa, abrirEmpresaAnexo, lerDocEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem,
   abrirUsuario, salvarUsuario, acaoUsuario, apontar, mascaraCNPJ, S, render
 });
 
