@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v14</title>
+<title>CPE — Contas por Empresa v15</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v14">
+<meta name="rf-versao" content="v15">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v14',
+  versao : 'v15',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -506,7 +506,8 @@ function telaOrigens(){
   let h = '<div class="card"><h3>CARTÕES E CONTAS</h3>'+
     '<div class="aviso">As origens nascem conforme aparecem no extrato — não precisa cadastrar antes. '+
     'Podem ser de terceiros (familiares), e é por elas que se descobre quem pagou.</div>'+
-    (podeEditar()? '<button class="bt" onclick="abrirOrigem()">+ Nova origem</button>':'');
+    (podeEditar()? '<button class="bt" onclick="abrirOrigem()">+ Nova origem</button> '+
+      '<button class="bt g" onclick="abrirExtrato()">📎 Importar extrato</button>':'');
   if(!S.origens.length) return h+'<div class="vazio">Nenhuma origem ainda.</div></div>';
   h += '<table style="margin-top:12px"><thead><tr><th>Nome</th><th>Tipo</th><th>Final / conta</th><th>Titular</th>'+
        '<th>Empresa padrão</th><th></th></tr></thead><tbody>'+
@@ -682,12 +683,12 @@ async function lerDocumento(){
   }catch(e){ statusLeitura('Não deu para ler: '+e.message+'. Preencha à mão — o arquivo continua anexado.'); }
 }
 
-async function textoDoPDF(file){
+async function textoDoPDF(file, maxPag){
   if(!window.pdfjsLib) return '';
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data:buf }).promise;
   let txt = '';
-  const n = Math.min(pdf.numPages, 3);
+  const n = Math.min(pdf.numPages, maxPag || 3);
   for(let i=1;i<=n;i++){
     const pg = await pdf.getPage(i);
     const c = await pg.getTextContent();
@@ -943,6 +944,156 @@ async function salvarEmpresa(){
 }
 
 /* --- origem --- */
+
+/* ===================== EXTRATO ===================== */
+let _extrato = null;
+
+function abrirExtrato(){
+  _extrato = null;
+  abrirModal('<h2>Importar extrato</h2>'+
+    '<div class="aviso">Anexe o PDF do extrato do banco. O sistema lê os lançamentos direto do arquivo, '+
+    'sem custo de IA. As saídas entram sem empresa e ficam na fila "Apontar depois".</div>'+
+    '<input type="file" id="ex-arq" accept="application/pdf" onchange="lerExtrato()">'+
+    '<div id="ex-status" style="font-size:12.5px;color:var(--fraco);margin-top:10px"></div>'+
+    '<div id="ex-corpo"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+      '<button class="bt g" onclick="fecharModal()">Fechar</button></div>');
+}
+function statusExtrato(t){ const e=document.getElementById('ex-status'); if(e) e.innerHTML=t; }
+
+function extratoCabecalho(t){
+  const plano = String(t||'').replace(/\s+/g,' ');
+  const banco = (plano.match(/\b(UNICRED|BRADESCO|ITA[UÚ]|SANTANDER|BANCO DO BRASIL|CAIXA|NUBANK|INTER|SICOOB|SICREDI|C6|BTG|SAFRA)\b/i)||[])[1] || '';
+  const conta = (plano.match(/Conta:?\s*([\d.-]+)/i)||[])[1] || '';
+  const tit   = (plano.match(/Solicitado por\s+([A-ZÀ-Ÿ][^-*]{3,60})/i)||[])[1] || '';
+  return { banco: banco ? banco.charAt(0)+banco.slice(1).toLowerCase() : '', conta, titular:(tit||'').trim() };
+}
+
+function extratoLinhas(t){
+  let plano = String(t||'').replace(/\s+/g,' ');
+  const ini = plano.search(/Data\s+Lan[çc]amentos/i);
+  if(ini > 0) plano = plano.slice(ini);
+  plano = plano.replace(/CENTRAL DE RELACIONAMENTO[^]*?OUVIDORIA:?\s*\d+/gi,' ')
+               .replace(/Data\s+Lan[çc]amentos\s+Valor\s*\(R\$\)\s+Saldo\s*\(R\$\)/gi,' ');
+  const linhas = [];
+  const re = /(\d{2}\/\d{2}\/\d{4})\s+(.*?)\s*(-\s*)?R\$\s*([\d.]+,\d{2})\s+(-\s*)?R\$\s*([\d.]+,\d{2})\s*([^]*?)(?=\d{2}\/\d{2}\/\d{4}\s|$)/g;
+  let m;
+  while((m = re.exec(plano)) !== null){
+    let desc = ((m[2]||'')+' '+(m[7]||'')).replace(/\s+/g,' ')
+      .replace(/CENTRAL DE RELACIONAMENTO[^]*$/i,'')
+      .replace(/0800[^]*$/i,'')
+      .replace(/Saldo no final[^]*$/i,'')
+      .replace(/P[áa]g\.?\s*\d+\s*\/?\s*\d*/gi,'').trim();
+    if(desc.replace(/[^A-Za-zÀ-ÿ]/g,'').length < 4) continue;
+    if(/Extrato|Per[ií]odo|Solicitado|Saldo em/i.test(desc)) continue;
+    const valor = Number(String(m[4]).replace(/\./g,'').replace(',','.'));
+    if(!valor) continue;
+    const p = m[1].split('/');
+    const contra = (desc.match(/\/\s*([^)]{3,80})\)/)||[])[1] || '';
+    linhas.push({ data:p[2]+'-'+p[1]+'-'+p[0], descricao:desc.slice(0,140),
+                  contraparte:(contra||'').trim(), valor, tipo: m[3] ? 'saida' : 'entrada' });
+  }
+  return linhas;
+}
+
+async function lerExtrato(){
+  const inp = document.getElementById('ex-arq');
+  const f = inp && inp.files && inp.files[0];
+  if(!f) return;
+  statusExtrato('Lendo o extrato…');
+  try{
+    const texto = await textoDoPDF(f, 30);
+    if(!texto || texto.replace(/\s/g,'').length < 60)
+      return statusExtrato('<span style="color:var(--vermelho)">Esse PDF não tem texto (deve ser escaneado). Peça o extrato em PDF direto do banco.</span>');
+    const cab = extratoCabecalho(texto);
+    const linhas = extratoLinhas(texto);
+    if(!linhas.length)
+      return statusExtrato('<span style="color:var(--vermelho)">Não reconheci nenhum lançamento nesse arquivo.</span>');
+
+    // já lançados antes (mesma data + valor + descrição)
+    const jaTem = new Set(S.movimentos.map(m=>m.data_movimento+'|'+Number(m.valor).toFixed(2)+'|'+(m.descricao||'').slice(0,60)));
+    linhas.forEach(l=>{ l.repetido = jaTem.has(l.data+'|'+l.valor.toFixed(2)+'|'+l.descricao.slice(0,60)); });
+
+    _extrato = { cab, linhas };
+    const ent = linhas.filter(x=>x.tipo==='entrada'), sai = linhas.filter(x=>x.tipo==='saida');
+    const rep = linhas.filter(x=>x.repetido).length;
+    const nomeSug = [cab.banco, cab.conta].filter(Boolean).join(' · ') || (cab.titular||'Conta');
+
+    statusExtrato('Lido do PDF, sem custo de IA.');
+    document.getElementById('ex-corpo').innerHTML =
+      '<div class="kpis" style="margin:12px 0">'+
+        kpi('Lançamentos', linhas.length)+
+        kpi('Entradas', ent.length+' · '+brl(ent.reduce((s,x)=>s+x.valor,0)))+
+        kpi('Saídas', sai.length+' · '+brl(sai.reduce((s,x)=>s+x.valor,0)))+
+        (rep? kpi('Já lançados', rep+' (serão pulados)') : '')+
+      '</div>'+
+      '<label>Origem (cartão / conta)</label>'+
+      '<select id="ex-origem"><option value="">— criar nova: '+esc(nomeSug)+' —</option>'+
+        S.origens.map(o=>'<option value="'+o.id+'">'+esc(o.nome)+(o.identificador?' ·'+esc(o.identificador):'')+'</option>').join('')+
+      '</select>'+
+      (cab.titular? '<div style="color:var(--fraco);font-size:12px;margin-top:4px">titular no extrato: '+esc(cab.titular)+'</div>':'')+
+      (ent.length? '<label>Empresa das ENTRADAS (obrigatória — é a regra do sistema)</label>'+
+        '<select id="ex-empresa"><option value="">— não importar as entradas —</option>'+
+          S.empresas.map(e=>'<option value="'+e.id+'">'+esc(e.apelido||e.razao_social)+'</option>').join('')+
+        '</select>' : '')+
+      '<div style="margin-top:14px"><button class="bt" onclick="importarExtrato()">Importar '+linhas.filter(x=>!x.repetido).length+' lançamentos</button></div>'+
+      '<div style="max-height:220px;overflow:auto;border:1px solid var(--linha);border-radius:8px;margin-top:12px">'+
+      '<table><thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead><tbody>'+
+        linhas.slice(0,60).map(l=>'<tr'+(l.repetido?' style="opacity:.45"':'')+'>'+
+          '<td style="white-space:nowrap">'+dataBR(l.data)+'</td>'+
+          '<td>'+esc(l.contraparte||l.descricao.slice(0,60))+(l.repetido?' <span class="tag">já lançado</span>':'')+'</td>'+
+          '<td style="text-align:right;white-space:nowrap;color:'+(l.tipo==='entrada'?'var(--verde)':'var(--vermelho)')+'">'+
+            (l.tipo==='entrada'?'+':'−')+brl(l.valor).replace('R$','')+'</td></tr>').join('')+
+      '</tbody></table></div>'+
+      (linhas.length>60? '<div style="color:var(--fraco);font-size:12px;margin-top:6px">mostrando os 60 primeiros de '+linhas.length+'</div>':'');
+  }catch(e){ statusExtrato('<span style="color:var(--vermelho)">Não deu para ler: '+esc(e.message)+'</span>'); }
+}
+
+async function importarExtrato(){
+  if(!_extrato) return;
+  const empresaEnt = val('ex-empresa') || null;
+  let origemId = val('ex-origem') || null;
+
+  if(!origemId){
+    const cab = _extrato.cab;
+    const nome = [cab.banco, cab.titular].filter(Boolean).join(' — ') || 'Conta importada';
+    const { data, error } = await sb.from('origens')
+      .insert({ nome, tipo:'conta', identificador: cab.conta||null, titular: cab.titular||null })
+      .select().maybeSingle();
+    if(error) return aviso('Não criou a origem: '+error.message,'erro');
+    S.origens.push(data); origemId = data.id;
+  }
+
+  const novos = _extrato.linhas.filter(l=>!l.repetido)
+    .filter(l=> l.tipo==='saida' || empresaEnt )
+    .map(l=>{
+      const base = { tipo:l.tipo, origem_id:origemId, valor:l.valor, data_movimento:l.data,
+                     descricao:l.descricao, fornecedor:l.contraparte||null,
+                     pago:true, data_pagamento:l.data, criado_por:S.user.id };
+      if(l.tipo==='entrada') base.empresa_id = empresaEnt;
+      else {
+        const sug = sugerirEmpresa({ fornecedor:l.contraparte, origem_id:origemId });
+        if(sug) base.empresa_id = sug;
+      }
+      return base;
+    });
+
+  if(!novos.length) return aviso('Nada novo para importar.','ok');
+
+  statusExtrato('Gravando '+novos.length+' lançamentos…');
+  let gravados = 0;
+  for(let i=0; i<novos.length; i+=100){
+    const lote = novos.slice(i, i+100);
+    const { data, error } = await sb.from('movimentos').insert(lote).select();
+    if(error){ aviso('Parou no lançamento '+(i+1)+': '+error.message,'erro'); break; }
+    (data||[]).forEach(m=>S.movimentos.unshift(m));
+    gravados += (data||[]).length;
+    statusExtrato('Gravando… '+gravados+' de '+novos.length);
+  }
+  _extrato = null; S.modal = null;
+  aviso(gravados+' lançamentos importados. As saídas sem empresa estão em "Apontar depois".','ok');
+}
+
 function abrirOrigem(id){
   const o = id ? S.origens.find(x=>x.id===id) : null;
   abrirModal('<h2>'+(o?'Editar origem':'Nova origem')+'</h2>'+
@@ -1046,7 +1197,7 @@ async function acaoUsuario(acao, id, extra){
 Object.assign(window, {
   entrar, sair, salvarChave, trocarTema, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
   alternarPago, excluirMov, lerDocumento, verAnexo, fecharModal,
-  abrirEmpresa, abrirEmpresaAnexo, lerDocEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem,
+  abrirEmpresa, abrirEmpresaAnexo, lerDocEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem, abrirExtrato, lerExtrato, importarExtrato,
   abrirUsuario, salvarUsuario, acaoUsuario, apontar, mascaraCNPJ, S, render
 });
 
