@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v18</title>
+<title>CPE — Contas por Empresa v19</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v18">
+<meta name="rf-versao" content="v19">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v18',
+  versao : 'v19',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -707,7 +707,7 @@ async function linhasDoPDF(file, maxPag){
     const grupos = [];
     c.items.forEach(it=>{
       const x = it.transform[4], y = Math.round(it.transform[5]);
-      let g = grupos.find(gg=>Math.abs(gg.y - y) <= 2);
+      let g = grupos.find(gg=>Math.abs(gg.y - y) <= 3);
       if(!g){ g = { y, partes:[] }; grupos.push(g); }
       g.partes.push({ x, str: it.str });
     });
@@ -1020,32 +1020,57 @@ function extratoValido(desc){
 }
 
 function extratoPorLinha(linhas){
+  // montagem por estado: a data abre o lançamento, o valor pode vir em outra
+  // linha (o pdf.js centraliza o valor quando a descrição ocupa 2 linhas)
   const out = [];
-  const re = /^(\d{2}\/\d{2}\/\d{4})\s+(.*?)\s*(-\s*)?R\$\s*([\d.]+,\d{2})\s+(-\s*)?R\$\s*([\d.]+,\d{2})\s*$/;
+  let atual = null;
+  const reData  = /^(\d{2}\/\d{2}\/\d{4})\b/;
+  const reMoeda = /(-\s*)?R\$\s*([\d.]+,\d{2})/g;
+
+  function fechar(){
+    if(atual && atual.valor){
+      const desc = extratoLimpa(atual.desc);
+      if(extratoValido(desc)){
+        out.push({ data:atual.data, descricao:desc.slice(0,140),
+                   contraparte:((desc.match(/\/\s*([^)]{3,80})\)/)||[])[1]||'').trim(),
+                   valor:atual.valor, tipo:atual.tipo });
+      }
+    }
+    atual = null;
+  }
+
   linhas.forEach(ln=>{
     const l = String(ln||'').replace(/\s+/g,' ').trim();
-    const m = l.match(re);
-    if(m){
-      const desc = extratoLimpa(m[2]);
-      const valor = extratoValor(m[4]);
-      if(valor && extratoValido(desc)){
-        const p = m[1].split('/');
-        out.push({ data:p[2]+'-'+p[1]+'-'+p[0], descricao:desc.slice(0,140),
-                   contraparte:'', valor, tipo: m[3] ? 'saida' : 'entrada' });
-      }
+    if(!l) return;
+    if(/CENTRAL DE RELACIONAMENTO|OUVIDORIA|^P[áa]g\.|Valor\s*\(R\$\)/i.test(l)) return;
+
+    reMoeda.lastIndex = 0;
+    const moedas = [];
+    let mm;
+    while((mm = reMoeda.exec(l)) !== null) moedas.push({ neg: !!mm[1], v: extratoValor(mm[2]) });
+    const semMoeda = l.replace(/(-\s*)?R\$\s*[\d.]+,\d{2}/g, ' ').replace(/\s+/g,' ').trim();
+    const md = l.match(reData);
+
+    if(md){                                   // linha nova de lançamento
+      fechar();
+      const p = md[1].split('/');
+      atual = { data:p[2]+'-'+p[1]+'-'+p[0], desc: semMoeda.replace(reData,'').trim(), valor:null, tipo:'saida' };
+      if(moedas.length){ atual.valor = moedas[0].v; atual.tipo = moedas[0].neg ? 'saida' : 'entrada'; }
       return;
     }
-    // linha sem data e sem valor: é a continuação da descrição da anterior
-    if(out.length && !/R\$/.test(l) && !/^\d{2}\/\d{2}\/\d{4}/.test(l)){
-      const extra = extratoLimpa(l);
-      if(extra && extra.length > 2 && /[A-Za-zÀ-ÿ]/.test(extra)){
-        const u = out[out.length-1];
-        u.descricao = (u.descricao+' '+extra).replace(/\s+/g,' ').slice(0,140);
-      }
+    if(!atual) return;
+    if(moedas.length && !atual.valor){         // o valor veio numa linha só dele
+      atual.valor = moedas[0].v;
+      atual.tipo  = moedas[0].neg ? 'saida' : 'entrada';
+      if(semMoeda) atual.desc = (atual.desc+' '+semMoeda).trim();
+      return;
+    }
+    if(!moedas.length && /[A-Za-zÀ-ÿ]/.test(semMoeda)){   // continuação da descrição
+      atual.desc = (atual.desc+' '+semMoeda).trim();
     }
   });
-  out.forEach(l=>{ l.contraparte = ((l.descricao.match(/\/\s*([^)]{3,80})\)/)||[])[1]||'').trim(); });
-  return out.filter(l=>extratoValido(l.descricao));
+  fechar();
+  return out;
 }
 
 function extratoCorrido(t){
