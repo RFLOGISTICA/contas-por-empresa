@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v16</title>
+<title>CPE — Contas por Empresa v17</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v16">
+<meta name="rf-versao" content="v17">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v16',
+  versao : 'v17',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -381,7 +381,8 @@ function telaPainel(){
       '<div style="max-width:190px"><label>Mês de referência</label>'+
       '<input type="month" value="'+S.mes+'" onchange="S.mes=this.value;render()"></div>'+
       (podeEditar()? '<button class="bt" onclick="abrirLancamento(\'saida\')">− Lançar saída</button>'+
-                     '<button class="bt g" onclick="abrirLancamento(\'entrada\')">+ Lançar entrada</button>' : '')+
+                     '<button class="bt g" onclick="abrirLancamento(\'entrada\')">+ Lançar entrada</button>'+
+                     '<button class="bt g" onclick="abrirExtrato()">📎 Anexar extrato</button>' : '')+
     '</div>';
 
   if(!S.empresas.length) return h + '<div class="card"><div class="vazio">Nenhuma empresa cadastrada ainda. Vá em <b>Empresas</b>.</div></div>';
@@ -674,10 +675,11 @@ async function lerDocumento(){
       const texto = await textoDoPDF(f, 30);
       // extrato não é nota: tem vários lançamentos e não cabe num lançamento só
       const linhasExtrato = extratoLinhas(texto||'');
-      if(linhasExtrato.length >= 5){
+      const cheiroDeExtrato = /extrato|lan[çc]amentos?\s+valor|saldo\s+anterior|saldo\s+em\s+\d{2}\/|per[ií]odo de\s+\d{2}\//i.test(texto||'');
+      if(linhasExtrato.length >= 3 || (cheiroDeExtrato && linhasExtrato.length >= 1)){
         _arquivoPendente = null;
         const e = document.getElementById('mv-arq'); if(e) e.value = '';
-        statusLeitura('<b>Isso parece um extrato</b>, com '+linhasExtrato.length+' lançamentos — não dá para virar um lançamento só.<br>'+
+        statusLeitura('<b>Isso é um extrato</b> ('+linhasExtrato.length+' lançamentos) — não cabe num lançamento só.<br>'+
           '<button class="bt mini" style="margin-top:8px" onclick="fecharModal();irPara(\'origens\');abrirExtrato()">Abrir a importação de extrato</button>');
         return;
       }
