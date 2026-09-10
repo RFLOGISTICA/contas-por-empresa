@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v10</title>
+<title>CPE — Contas por Empresa v11</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v10">
+<meta name="rf-versao" content="v11">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v10',
+  versao : 'v11',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -712,10 +712,22 @@ function extrairDoTexto(t){
 async function lerPorIA(file){
   const b64 = await new Promise((ok,err)=>{ const r=new FileReader();
     r.onload=()=>ok(String(r.result).split(',')[1]); r.onerror=()=>err(new Error('leitura falhou')); r.readAsDataURL(file); });
-  const { data, error } = await sb.functions.invoke('ler-nota', {
-    body:{ imagemBase64:b64, mimeType:file.type||'image/jpeg', tipo:'nota', nome:file.name }
-  });
-  if(error) throw new Error(error.message);
+  const mime = file.type || 'image/jpeg';
+  // manda o conteúdo com todos os nomes de campo já usados nas Edge Functions,
+  // pra funcionar independente de como a ler-nota foi escrita
+  const corpo = {
+    imagemBase64: b64, imagem: b64, base64: b64, image: b64, arquivo: b64,
+    imageBase64: b64, file: b64, dataUrl: 'data:'+mime+';base64,'+b64,
+    mimeType: mime, mime_type: mime, mime: mime,
+    tipo: 'nota', nome: file.name
+  };
+  const { data, error } = await sb.functions.invoke('ler-nota', { body: corpo });
+  if(error){
+    let msg = error.message || String(error);
+    try{ const j = await error.context.json(); if(j && (j.erro||j.error)) msg = j.erro||j.error; }
+    catch(e){ try{ const t = await error.context.text(); if(t) msg = t.slice(0,300); }catch(e2){} }
+    throw new Error(msg);
+  }
   return normalizarLeitura(data);
 }
 /* aceita qualquer formato de resposta da Edge Function: procura as chaves no JSON */
