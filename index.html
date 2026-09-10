@@ -3,967 +3,847 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Contas por empresa — CPE v3</title>
+<title>CPE — Contas por Empresa v6</title>
+
+<!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
-<meta name="rf-sistema-nome" content="Contas por empresa">
-<meta name="rf-versao" content="v3">
+<meta name="rf-sistema-nome" content="Contas por Empresa">
+<meta name="rf-versao" content="v6">
 <meta name="rf-data" content="2026-09-10">
-<meta name="rf-cliente" content="—">
-<meta name="theme-color" content="#F3F4F1">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Contas">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..800;1,75..125,400..700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --ink:#1B2430;
-  --ink-2:#46525F;
-  --ink-3:#7B8794;
-  --paper:#F3F4F1;
-  --paper-2:#FFFFFF;
-  --rule:#D9DCD6;
-  --rule-2:#EAECE7;
-  --vencido:#A4271F;
-  --pago:#2C6249;
-  --entrada:#2C6249;
-  --saida:#A4271F;
-  --foco:#3B5BA5;
-  --ouro:#D4A017;
-  --r:4px;
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{
-  background:var(--paper);
-  color:var(--ink);
-  font-family:'Archivo',system-ui,-apple-system,sans-serif;
-  font-variation-settings:'wdth' 100;
-  font-size:15px;
-  line-height:1.45;
-  -webkit-text-size-adjust:100%;
-}
-button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
-.num{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.wrap{max-width:940px;margin:0 auto;padding:0 16px 96px}
-
-/* ---------- topo ---------- */
-header.topo{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:30}
-.topo-in{max-width:940px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
-.marca{font-weight:700;font-variation-settings:'wdth' 88;letter-spacing:-.02em;font-size:17px}
-.marca span{color:var(--ink-3);font-weight:500}
-.topo-dir{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.btn{border:1px solid var(--rule);background:var(--paper-2);border-radius:var(--r);padding:7px 12px;font-weight:600;font-size:13.5px}
-.btn:hover{border-color:var(--ink-3)}
-.btn-forte{background:var(--ink);color:#fff;border-color:var(--ink)}
-.btn-forte:hover{background:#0F1620}
-.btn-sm{padding:5px 9px;font-size:12.5px}
-.btn-txt{border:0;background:none;padding:4px 2px;font-size:13px;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px}
-
-/* ---------- painel ---------- */
-.painel{padding:22px 0 6px}
-.painel h1{margin:0;font-size:13.5px;font-weight:600;color:var(--ink-2)}
-.total{font-size:clamp(34px,9vw,54px);font-weight:700;font-variation-settings:'wdth' 112;letter-spacing:-.035em;margin:2px 0 0;line-height:1.02}
-.total small{font-size:.42em;font-weight:600;color:var(--ink-3);margin-right:.18em;font-variation-settings:'wdth' 100}
-.total.neg{color:var(--vencido)}
-.sub{color:var(--ink-2);font-size:13.5px;margin-top:4px}
-.par{display:flex;gap:22px;margin-top:10px;flex-wrap:wrap}
-.par div{font-size:13.5px}
-.par em{font-style:normal;color:var(--ink-2);display:block;font-size:12px}
-.par b{font-weight:700;font-size:16px}
-.par b.ent{color:var(--entrada)}
-.par b.sai{color:var(--saida)}
-
-/* ---------- fila sem empresa ---------- */
-.fila{
-  border:1px solid var(--ouro);border-left-width:4px;background:var(--paper-2);
-  border-radius:var(--r);padding:11px 13px;margin:16px 0 0;
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-}
-.fila b{font-weight:700}
-.fila .msg{font-size:13.5px;min-width:0}
-.fila .btn{margin-left:auto}
-
-/* ---------- período ---------- */
-.periodo{display:flex;align-items:center;gap:8px;padding:14px 0;border-top:1px solid var(--rule);margin-top:16px}
-.periodo .titulo{font-weight:700;font-size:14px;font-variation-settings:'wdth' 90}
-.periodo .setas{margin-left:auto;display:flex;gap:6px}
-
-/* ---------- caixas por CNPJ ---------- */
-.caixas{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px;margin-top:12px}
-.cx{background:var(--paper-2);border:1px solid var(--rule);border-radius:8px;padding:12px;text-align:left;display:block;width:100%}
-.cx:hover{border-color:var(--ink-3)}
-.cx.solta{border-style:dashed}
-.cx-nome{font-weight:700;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cx-cnpj{font-size:11.5px;color:var(--ink-3);margin-top:1px}
-.cx-valor{font-size:19px;font-weight:700;letter-spacing:-.02em;margin-top:9px}
-.cx-valor.neg{color:var(--vencido)}
-.cx-pe{font-size:12px;color:var(--ink-2);margin-top:6px}
-.cx-pe u{text-decoration:none;color:var(--entrada)}
-.cx-pe s{text-decoration:none;color:var(--saida)}
-
-.cx-aberta{grid-column:1/-1;background:var(--paper-2);border:1px solid var(--ink-3);border-radius:8px;padding:14px 14px 4px}
-.cx-topo{display:flex;align-items:flex-start;gap:10px}
-.cx-topo .cx-nome{font-size:17px}
-.cx-topo .fechar{margin-left:auto;display:flex;gap:8px;flex:none;flex-wrap:wrap;justify-content:flex-end}
-.cx-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0 2px}
-.cx-num{background:var(--paper);border-radius:var(--r);padding:9px 10px}
-.cx-num em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-2)}
-.cx-num b{font-size:15.5px;font-weight:700}
-.cx-num b.ent{color:var(--entrada)}
-.cx-num b.sai{color:var(--saida)}
-.cx-num b.neg{color:var(--vencido)}
-@media(max-width:420px){.cx-nums{grid-template-columns:1fr 1fr}}
-
-/* ---------- filtros e lista ---------- */
-.filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-top:12px}
-.chip{border:1px solid var(--rule);background:var(--paper-2);border-radius:100px;padding:5px 12px;font-size:13px;font-weight:600}
-.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.busca{flex:1;min-width:150px;border:1px solid var(--rule);border-radius:var(--r);padding:7px 10px;background:var(--paper-2)}
-
-.lista{margin-top:2px}
-.dia{display:flex;align-items:baseline;gap:10px;padding:18px 0 6px;border-bottom:1px solid var(--ink);font-weight:700;font-size:13.5px;font-variation-settings:'wdth' 90}
-.dia span{margin-left:auto;font-weight:600;color:var(--ink-2)}
-.linha{display:grid;grid-template-columns:4px 1fr auto;gap:0 12px;padding:11px 0;border-bottom:1px solid var(--rule-2);align-items:start}
-.linha:hover{background:#EDEEEA}
-.faixa{border-radius:2px;align-self:stretch}
-.l-meio{min-width:0}
-.l-forn{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.l-info{font-size:12.5px;color:var(--ink-2);margin-top:1px}
-.l-info .solto{color:var(--ouro);font-weight:700}
-.l-dir{text-align:right;white-space:nowrap}
-.l-valor{font-weight:700}
-.l-valor.ent{color:var(--entrada)}
-.l-valor.sai{color:var(--saida)}
-.l-sub{font-size:12.5px;color:var(--ink-2);margin-top:1px}
-.acoes{grid-column:2/4;display:flex;gap:14px;margin-top:7px;flex-wrap:wrap}
-.apontar{grid-column:2/4;margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.apontar select{border:1px solid var(--ouro);border-radius:var(--r);padding:6px 8px;background:var(--paper-2);font-size:13px}
-.vazio{padding:40px 0;text-align:center;color:var(--ink-2)}
-.vazio p{margin:0 0 12px}
-
-.rodape-selo{max-width:940px;margin:26px auto 0;padding:14px 16px 0;border-top:1px solid var(--rule-2);color:var(--ink-3);font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
-/* ---------- modal ---------- */
-.tela{position:fixed;inset:0;background:rgba(20,26,34,.5);display:flex;align-items:flex-end;justify-content:center;z-index:60;padding:0}
-.folha{background:var(--paper);width:100%;max-width:640px;max-height:94vh;overflow:auto;border-radius:10px 10px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
-@media(min-width:700px){.tela{align-items:center;padding:20px}.folha{border-radius:8px}}
-.folha h2{margin:0 0 2px;font-size:19px;font-variation-settings:'wdth' 92;letter-spacing:-.02em}
-.folha .dica{color:var(--ink-2);font-size:13px;margin:0 0 16px}
-.campo{margin-bottom:12px}
-.campo label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:4px}
-.campo input,.campo select,.campo textarea{width:100%;border:1px solid var(--rule);border-radius:var(--r);padding:9px 10px;background:var(--paper-2)}
-.campo textarea{min-height:62px;resize:vertical}
-.campo .obs{font-size:12px;color:var(--ink-3);margin-top:4px}
-.dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.rodape{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
-.rodape .esq{margin-right:auto}
-
-.tipos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.tipos button{border:1px solid var(--rule);background:var(--paper-2);border-radius:var(--r);padding:11px 8px;font-weight:700;font-size:14px}
-.tipos button[aria-pressed="true"]{color:#fff}
-.tipos button.ent[aria-pressed="true"]{background:var(--entrada);border-color:var(--entrada)}
-.tipos button.sai[aria-pressed="true"]{background:var(--saida);border-color:var(--saida)}
-
-.leitor{border:1px dashed var(--rule);border-radius:var(--r);padding:12px;margin-bottom:14px;background:var(--paper-2)}
-.leitor p{margin:0 0 9px;font-size:13px;color:var(--ink-2)}
-.leitor .achados{font-size:12.5px;color:var(--pago);margin-top:9px}
-.leitor .falha{font-size:12.5px;color:var(--vencido);margin-top:9px}
-.leitor .sugerido{font-size:12.5px;color:var(--foco);margin-top:6px}
-
-table.emp{width:100%;border-collapse:collapse;margin-bottom:8px}
-table.emp td{padding:9px 0;border-bottom:1px solid var(--rule-2);font-size:14px;vertical-align:middle}
-table.emp td:last-child{text-align:right;white-space:nowrap}
-.pt{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:8px}
-
-.porta{max-width:380px;margin:0 auto;padding:56px 20px}
-.porta h1{font-size:26px;font-variation-settings:'wdth' 92;letter-spacing:-.03em;margin:0 0 4px}
-.porta p.lead{color:var(--ink-2);margin:0 0 26px;font-size:14px}
-.erro{color:var(--vencido);font-size:13px;margin-top:10px;min-height:18px}
-.carregando{padding:60px 0;text-align:center;color:var(--ink-3)}
-</style>
-</head>
-<body>
-<div id="app"><div class="carregando">Carregando…</div></div>
+<meta name="rf-cliente" content="Vinicius">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+  :root{
+    --ouro:#D4A017; --ouro-claro:#E8C46A; --preto:#0b0b0b; --carvao:#121212;
+    --carta:#171717; --linha:#262626; --texto:#ededed; --fraco:#9a9a9a;
+    --verde:#3ea55f; --vermelho:#c8452f; --azul:#3a6ea5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--preto);color:var(--texto);
+       font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px}
+  a{color:var(--ouro-claro)}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 14px 80px}
+
+  header.top{background:var(--carvao);border-bottom:1px solid var(--linha);position:sticky;top:0;z-index:40}
+  .topin{max-width:1280px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .marca{display:flex;align-items:center;gap:9px}
+  .marca b{font-size:16px;letter-spacing:.5px}
+  .marca span{font-weight:300;letter-spacing:2px;font-size:11px;color:var(--fraco);display:block}
+  .quem{margin-left:auto;text-align:right;font-size:12px;color:var(--fraco)}
+  .quem b{color:var(--texto);display:block;font-size:13px}
+
+  nav.abas{display:flex;gap:6px;flex-wrap:wrap;padding:10px 0}
+  nav.abas button{background:var(--carta);border:1px solid var(--linha);color:var(--fraco);
+       padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px}
+  nav.abas button.on{background:var(--ouro);border-color:var(--ouro);color:#101010;font-weight:700}
+  nav.abas button .bad{background:var(--vermelho);color:#fff;border-radius:20px;padding:1px 7px;margin-left:6px;font-size:11px}
+
+  .card{background:var(--carta);border:1px solid var(--linha);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h3{margin:0 0 10px;font-size:14px;letter-spacing:.4px;color:var(--ouro-claro)}
+
+  .resumo{cursor:pointer;display:flex;align-items:center;gap:10px}
+  .resumo .seta{color:var(--ouro);font-size:12px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+  .kpi{background:#101010;border:1px solid var(--linha);border-radius:10px;padding:10px}
+  .kpi small{display:block;color:var(--fraco);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+  .kpi b{font-size:19px;display:block;margin-top:3px}
+
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .caixa{background:var(--carta);border:1px solid var(--linha);border-radius:12px;padding:13px;cursor:pointer;
+         transition:border-color .15s}
+  .caixa:hover{border-color:#3a3a3a}
+  .caixa.aberta{grid-column:1/-1;cursor:default;border-color:var(--ouro)}
+  .caixa .cnpj{color:var(--fraco);font-size:11px;letter-spacing:.4px}
+  .caixa .nome{font-weight:700;font-size:15px;margin:2px 0 8px}
+  .barra{height:8px;background:#0d0d0d;border-radius:6px;overflow:hidden;border:1px solid var(--linha)}
+  .barra i{display:block;height:100%;background:linear-gradient(90deg,#8a5a06,var(--ouro))}
+  .miniln{display:flex;justify-content:space-between;font-size:12px;color:var(--fraco);margin-top:6px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#0d0d0d;color:var(--ouro-claro);text-align:left;padding:8px;font-size:11px;
+     text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--linha)}
+  td{padding:8px;border-bottom:1px solid #1e1e1e;vertical-align:top}
+  tr.pago td{opacity:.62}
+  .tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:11px;border:1px solid var(--linha)}
+  .tag.e{color:var(--verde);border-color:#20441f;background:#0e1a0e}
+  .tag.s{color:#e08b6a;border-color:#442a1f;background:#1a0f0e}
+
+  button.bt{background:var(--ouro);border:none;color:#101010;font-weight:700;padding:8px 14px;
+            border-radius:9px;cursor:pointer;font-size:13px}
+  button.bt.g{background:#1f1f1f;color:var(--texto);border:1px solid var(--linha);font-weight:500}
+  button.bt.mini{padding:4px 9px;font-size:12px}
+  button.bt:disabled{opacity:.5;cursor:not-allowed}
+
+  label{display:block;font-size:11px;color:var(--fraco);text-transform:uppercase;letter-spacing:.5px;margin:9px 0 4px}
+  input,select,textarea{width:100%;background:#0e0e0e;border:1px solid var(--linha);color:var(--texto);
+        padding:9px;border-radius:8px;font-size:14px;font-family:inherit}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ouro)}
+  .lin{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0 12px}
+
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:60;display:flex;
+           align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto}
+  .modal{background:var(--carta);border:1px solid var(--linha);border-radius:14px;padding:18px;
+         width:100%;max-width:640px}
+  .modal h2{margin:0 0 4px;font-size:17px;color:var(--ouro-claro)}
+
+  .aviso{background:#1a1408;border:1px solid #4a3a10;color:#e8d7a8;padding:9px 11px;border-radius:9px;font-size:12.5px;margin-bottom:10px}
+  .erro{background:#1d0d0a;border:1px solid #55201a;color:#f0b6a8;padding:9px 11px;border-radius:9px;font-size:12.5px;margin-bottom:10px}
+  .ok{background:#0d1a0f;border:1px solid #24461f;color:#bfe6bf;padding:9px 11px;border-radius:9px;font-size:12.5px;margin-bottom:10px}
+  .vazio{color:var(--fraco);text-align:center;padding:26px;font-size:13px}
+
+  footer.selo{position:fixed;bottom:0;left:0;right:0;background:var(--carvao);border-top:1px solid var(--linha);
+        padding:5px 12px;font-size:11px;color:var(--fraco);display:flex;gap:10px;justify-content:center;z-index:30}
+  footer.selo b{color:var(--ouro)}
+
+  .login{max-width:380px;margin:9vh auto;text-align:center}
+  .login .card{text-align:left}
+  @media(max-width:600px){ .quem{width:100%;text-align:left;margin-left:0} th,td{padding:6px} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<footer class="selo" id="selo"></footer>
+
 <script>
-/* =========================================================
-   RF SISTEMAS · CPE — Contas por empresa · v3 · 10/09/2026
-   ---------------------------------------------------------
-   Identificação do arquivo (não apagar):
-     codigo  CPE   — cada sistema da RF Sistemas tem o seu
-     versao  v3    — sobe de 1 em 1 a cada entrega
-   Confira com  SISTEMA  no console ou nas meta tags do <head>.
-
-   v3: a unidade deixa de ser "conta a pagar" e passa a ser MOVIMENTO
-   (entrada ou saída). Descoberta do primeiro teste de leitura: as notas
-   do cliente são de CONSUMO — o CNPJ delas não bate com PJ nenhuma.
-   Quem aponta a empresa é a transferência ou o cartão. Por isso:
-     · na SAÍDA a empresa é opcional e o que fica solto vai para uma FILA
-     · na ENTRADA a empresa é obrigatória (regra do Renato)
-     · as ORIGENS (cartões e contas) nascem conforme aparecem, sem cadastro
-     · o sistema APRENDE: fornecedor apontado vira sugestão na próxima vez
-   Requer o banco-v3.sql aplicado.
-   ========================================================= */
-
+/* ==========================================================================
+   CPE — CONTAS POR EMPRESA
+   Sistema..: CPE (RF Sistemas)
+   Versão...: v6  ·  10/09/2026
+   Cliente..: Vinicius
+   ========================================================================== */
 const SISTEMA = {
-  codigo: 'CPE',
-  nome:   'Contas por empresa',
-  versao: 'v3',
-  data:   '10/09/2026',
-  casa:   'RF Sistemas'
+  codigo : 'CPE',
+  nome   : 'Contas por Empresa',
+  versao : 'v6',
+  data   : '10/09/2026',
+  cliente: 'Vinicius',
+  casa   : 'RF Sistemas'
 };
-console.log(`%c${SISTEMA.casa} · ${SISTEMA.codigo} · ${SISTEMA.nome} · ${SISTEMA.versao} (${SISTEMA.data})`,
-  'background:#000;color:#D4A017;padding:3px 8px;border-radius:4px');
 
-const CORES = ['#3B5BA5','#A8582A','#4F7A3C','#7A3E6E','#2F6F7A','#8A6D1F','#5A4FA3'];
+/* --------------------------------------------------------------------------
+   CONFIGURAÇÃO — a ÚNICA coisa que precisa ser preenchida à mão.
+   A chave está em: Supabase > Project Settings > API > anon public
+   -------------------------------------------------------------------------- */
+const CFG = {
+  url : 'https://btbxqbozmrbbhjjpajbv.supabase.co',
+  anon: 'COLE_AQUI_A_ANON_KEY'
+};
 
-/* Marca RF Sistemas — selo preto com três barras, a maior em ouro. */
+let sb = null;
+const S = {
+  user:null, perfil:null, empresasPermitidas:[],
+  empresas:[], origens:[], movimentos:[], regras:[], perfis:[],
+  tela:'painel', mes:mesHoje(), aberta:null, resumoAberto:false,
+  msg:null, msgTipo:'ok', carregando:false, modal:null
+};
+
+/* ===================== utilidades ===================== */
+function mesHoje(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function brl(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function dataBR(d){ if(!d) return '—'; const p=String(d).slice(0,10).split('-'); return p.length===3? p[2]+'/'+p[1]+'/'+p[0] : d; }
+function esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function soDig(t){ return String(t||'').replace(/\D/g,''); }
+function mascaraCNPJ(t){ const d=soDig(t).slice(0,14);
+  return d.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3')
+          .replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2'); }
+function validaCNPJ(t){
+  const c=soDig(t); if(c.length!==14||/^(\d)\1+$/.test(c)) return false;
+  const calc=(base,pesos)=>{ let s=0; for(let i=0;i<pesos.length;i++) s+=Number(base[i])*pesos[i];
+    const r=s%11; return r<2?0:11-r; };
+  const d1=calc(c,[5,4,3,2,9,8,7,6,5,4,3,2]);
+  const d2=calc(c,[6,5,4,3,2,9,8,7,6,5,4,3,2]);
+  return d1===Number(c[12]) && d2===Number(c[13]);
+}
+function norm(t){ return String(t||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
 function marcaSVG(px){
-  return `<svg viewBox="0 0 100 100" width="${px}" height="${px}" aria-hidden="true"
-    style="display:block;flex:none">
-    <rect x="8" y="8" width="84" height="84" rx="22" fill="#000"/>
-    <rect x="26" y="58" width="14" height="16" rx="4" fill="#fff"/>
-    <rect x="43" y="42" width="14" height="32" rx="4" fill="#fff"/>
-    <rect x="60" y="26" width="14" height="48" rx="4" fill="#D4A017"/>
-  </svg>`;
+  return '<svg width="'+px+'" height="'+px+'" viewBox="0 0 100 100" aria-hidden="true">'+
+    '<rect width="100" height="100" rx="22" fill="#0b0b0b" stroke="#242424"/>'+
+    '<rect x="22" y="60" width="14" height="20" rx="3" fill="#ffffff"/>'+
+    '<rect x="43" y="45" width="14" height="35" rx="3" fill="#ffffff"/>'+
+    '<rect x="64" y="26" width="14" height="54" rx="3" fill="#D4A017"/></svg>';
 }
+function aviso(txt,tipo){ S.msg=txt; S.msgTipo=tipo||'ok'; render(); if(txt) setTimeout(()=>{ if(S.msg===txt){S.msg=null;render();} },6000); }
+function val(id){ const e=document.getElementById(id); return e? e.value : ''; }
+function chk(id){ const e=document.getElementById(id); return e? e.checked : false; }
 
-const URL_PROJETO = 'https://btbxqbozmrbbhjjpajbv.supabase.co';
-const CHAVE_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0YnhxYm96bXJiYmhqanBhamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NjA5NDksImV4cCI6MjEwNDUzNjk0OX0.SGX5jvB_xoxbv2nqRaEhbk1QDHsnEIVqTau5xyekVVo';
-
-const APP = {
-  sb:null, user:null, perfil:null,
-  empresas:[], movimentos:[], origens:[], regras:[],
-  mes: new Date().toISOString().slice(0,7),
-  filtro:{ empresa:'todas', tipo:'todos', busca:'' },
-  novo:{ tipo:'saida' }
-};
-
-/* ---------- utilidades ---------- */
-const $ = s => document.querySelector(s);
-const el = id => document.getElementById(id);
-const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const brl = v => (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const soNum = s => String(s||'').replace(/\D/g,'');
-const hoje = () => new Date().toISOString().slice(0,10);
-const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-function fmtData(d){ if(!d) return '—'; const [a,m,x]=d.split('-'); return `${x}/${m}/${a}`; }
-function fmtMes(k){ const [a,m]=k.split('-'); return `${MESES[Number(m)-1]} de ${a}`; }
-function fmtCnpj(c){ const n=soNum(c); return n.length===14 ? n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5') : c; }
-function empresaPor(id){ return APP.empresas.find(e=>e.id===id) || null; }
-function origemPor(id){ return APP.origens.find(o=>o.id===id) || null; }
-function corDe(e){ return e?.cor || CORES[APP.empresas.findIndex(x=>x.id===e?.id) % CORES.length] || '#888'; }
-function podeEditar(){ return (APP.perfil?.papel || 'dono') !== 'leitura'; }
-function mesAnterior(k){ const [a,m]=k.split('-').map(Number); const d=new Date(a, m-2, 1); return d.toISOString().slice(0,7); }
-function mesSeguinte(k){ const [a,m]=k.split('-').map(Number); const d=new Date(a, m, 1); return d.toISOString().slice(0,7); }
-
-/* validação de CNPJ — evita cadastrar número digitado errado */
-function cnpjValido(v){
-  const c = soNum(v);
-  if(c.length!==14 || /^(\d)\1{13}$/.test(c)) return false;
-  const calc = base => {
-    let p = base.length===12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
-    let s = 0; for(let i=0;i<base.length;i++) s += Number(base[i])*p[i];
-    const r = s % 11; return r < 2 ? 0 : 11 - r;
-  };
-  return calc(c.slice(0,12))===Number(c[12]) && calc(c.slice(0,13))===Number(c[13]);
-}
-
-/* ---------- arranque ---------- */
-window.addEventListener('DOMContentLoaded', iniciar);
-
+/* ===================== boot ===================== */
 async function iniciar(){
-  try{
-    APP.sb = supabase.createClient(URL_PROJETO, CHAVE_ANON);
-  }catch(e){
-    $('#app').innerHTML = `<div class="porta"><h1>Não deu para conectar</h1>
-      <p class="lead">Verifique a internet e recarregue a página.</p></div>`;
+  document.getElementById('selo').innerHTML =
+    '<span><b>'+SISTEMA.codigo+'</b> '+SISTEMA.versao+'</span><span>'+SISTEMA.nome+'</span><span>'+SISTEMA.casa+' · '+SISTEMA.data+'</span>';
+  console.log('%c'+SISTEMA.codigo+' · '+SISTEMA.nome+' · '+SISTEMA.versao+' · '+SISTEMA.data+' · cliente: '+SISTEMA.cliente,
+              'color:#D4A017;font-weight:bold');
+
+  if(CFG.anon.indexOf('COLE_AQUI')===0){
+    document.getElementById('app').innerHTML =
+      '<div class="wrap"><div class="card" style="margin-top:40px"><h3>Falta a chave</h3>'+
+      '<p>Abra o <b>index.html</b> e cole a chave <b>anon public</b> do projeto na constante <code>CFG.anon</code>.</p>'+
+      '<p style="color:#9a9a9a">Supabase &gt; Project Settings &gt; API &gt; anon public</p></div></div>';
     return;
   }
-  const { data } = await APP.sb.auth.getSession();
-  if(!data.session) return telaLogin();
-  APP.user = data.session.user;
-  await carregarTudo();
+  sb = window.supabase.createClient(CFG.url, CFG.anon, { auth:{ persistSession:true, autoRefreshToken:true } });
+  if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const { data } = await sb.auth.getSession();
+  if(data && data.session){ S.user = data.session.user; await carregarTudo(); }
+  render();
 }
 
-/* ---------- tela: entrar ---------- */
-function telaLogin(msg){
-  $('#app').innerHTML = `
-    <div class="porta">
-      <div style="margin-bottom:18px">${marcaSVG(56)}</div>
-      <h1>Contas por empresa</h1>
-      <p class="lead" style="margin-bottom:26px">Um sistema RF Sistemas. Entre com o e-mail cadastrado.</p>
-      <div class="campo"><label for="e">E-mail</label><input id="e" type="email" autocomplete="username"></div>
-      <div class="campo"><label for="s">Senha</label><input id="s" type="password" autocomplete="current-password"></div>
-      <button class="btn btn-forte" style="width:100%" onclick="entrar()">Entrar</button>
-      <div class="erro" id="err">${esc(msg||'')}</div>
-    </div>`;
-  el('s').addEventListener('keydown', ev => { if(ev.key==='Enter') entrar(); });
-}
 async function entrar(){
-  const email = el('e').value.trim();
-  const bruta = el('s').value;
-  const password = bruta.trim();
-  el('err').textContent = 'Entrando…';
-  const { data, error } = await APP.sb.auth.signInWithPassword({email,password});
-  if(error){
-    const m = (error.message||'').toLowerCase();
-    let txt;
-    if(m.includes('invalid login')) txt = 'E-mail ou senha não conferem.';
-    else if(m.includes('email not confirmed')) txt = 'Este e-mail ainda não foi confirmado no Supabase.';
-    else if(m.includes('api key') || m.includes('jwt') || m.includes('invalid claim'))
-      txt = 'A chave pública não corresponde a este projeto.';
-    else txt = 'Não deu para entrar: ' + error.message;
-    if(bruta !== password) txt += ' (a senha colada tinha espaço sobrando — já foi removido nesta tentativa)';
-    el('err').textContent = txt;
-    return;
-  }
-  APP.user = data.user;
+  const email = val('lg-email').trim(), senha = val('lg-senha');
+  if(!email || !senha) return aviso('Informe e-mail e senha.','erro');
+  S.carregando = true; render();
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:senha });
+  S.carregando = false;
+  if(error) return aviso('Não entrou: '+error.message,'erro');
+  S.user = data.user;
   await carregarTudo();
+  render();
 }
-async function sair(){ await APP.sb.auth.signOut(); location.reload(); }
+async function sair(){ await sb.auth.signOut(); S.user=null; S.perfil=null; S.movimentos=[]; S.empresas=[]; S.tela='painel'; render(); }
 
-/* ---------- carregar ---------- */
+/* ===================== carga ===================== */
 async function carregarTudo(){
-  $('#app').innerHTML = `<div class="carregando">Carregando…</div>`;
-  const [perfil, empresas, movimentos, origens, regras] = await Promise.all([
-    APP.sb.from('perfis').select('*').eq('id', APP.user.id).maybeSingle(),
-    APP.sb.from('empresas').select('*').order('nome'),
-    APP.sb.from('movimentos').select('*').order('data',{ascending:false}),
-    APP.sb.from('origens').select('*').order('nome'),
-    APP.sb.from('regras_fornecedor').select('*')
-  ]);
+  S.carregando = true; render();
+  try{
+    const { data:perfil } = await sb.from('perfis').select('*').eq('id', S.user.id).maybeSingle();
+    S.perfil = perfil || null;
+    if(!S.perfil){ aviso('Seu login existe, mas ainda não tem perfil no sistema. Peça ao administrador.','erro'); S.carregando=false; return; }
+    if(S.perfil.ativo === false){ aviso('Seu acesso está desativado.','erro'); S.carregando=false; return; }
 
-  const falhou = [empresas, movimentos, origens, regras].find(r => r.error);
-  if(falhou){
-    const m = falhou.error.message || '';
-    if(/does not exist|relation/i.test(m)){
-      $('#app').innerHTML = `<div class="porta"><h1>Banco desatualizado</h1>
-        <p class="lead">Este app é a versão 3 e o banco ainda está na 2.
-        Rode o arquivo <b>banco-v3.sql</b> no SQL Editor do projeto e recarregue.</p>
-        <div class="erro">${esc(m)}</div></div>`;
-      return;
+    const [emp, ori, mov, reg] = await Promise.all([
+      sb.from('empresas').select('*').order('razao_social'),
+      sb.from('origens').select('*').order('nome'),
+      sb.from('movimentos').select('*').order('data_movimento',{ascending:false}).limit(4000),
+      sb.from('regras_fornecedor').select('*')
+    ]);
+    S.empresas   = emp.data || [];
+    S.origens    = ori.data || [];
+    S.movimentos = mov.data || [];
+    S.regras     = reg.data || [];
+    if(podeUsuarios()){
+      const { data:ps } = await sb.from('perfis').select('*').order('papel');
+      S.perfis = ps || [];
     }
-    $('#app').innerHTML = `<div class="porta"><h1>Não deu para carregar</h1>
-      <p class="lead">${esc(m)}</p>
-      <button class="btn" onclick="sair()">Sair</button></div>`;
-    return;
+  }catch(e){ aviso('Erro ao carregar: '+e.message,'erro'); }
+  S.carregando = false;
+}
+
+function papel(){ return S.perfil ? S.perfil.papel : null; }
+function podeEditar(){ return ['mestre','dono','operador'].indexOf(papel())>=0; }
+function podeUsuarios(){ return ['mestre','dono'].indexOf(papel())>=0; }
+function podeApagar(){ return ['mestre','dono'].indexOf(papel())>=0; }
+
+/* ===================== filtros ===================== */
+function doMes(m){ return (m.data_movimento||'').slice(0,7) === S.mes; }
+function movsDaEmpresa(id){ return S.movimentos.filter(m=>m.empresa_id===id && doMes(m)); }
+function fila(){ return S.movimentos.filter(m=>!m.empresa_id); }
+function totais(lista){
+  let ent=0, sai=0, pago=0;
+  lista.forEach(m=>{ const v=Number(m.valor)||0;
+    if(m.tipo==='entrada') ent+=v; else { sai+=v; if(m.pago) pago+=v; } });
+  return { ent, sai, pago, saldo:ent-sai, pct: sai>0 ? Math.min(100,Math.round(pago/sai*100)) : 0 };
+}
+function nomeEmpresa(id){ const e=S.empresas.find(x=>x.id===id); return e ? (e.apelido||e.razao_social) : '—'; }
+function nomeOrigem(id){ const o=S.origens.find(x=>x.id===id); return o ? o.nome+(o.identificador?' ·'+o.identificador:'') : '—'; }
+
+/* ===================== render ===================== */
+function render(){
+  const app = document.getElementById('app');
+  if(!S.user){ app.innerHTML = telaLogin(); return; }
+
+  let corpo = '';
+  if(S.carregando && !S.empresas.length) corpo = '<div class="vazio">Carregando…</div>';
+  else if(S.tela==='painel')   corpo = telaPainel();
+  else if(S.tela==='fila')     corpo = telaFila();
+  else if(S.tela==='origens')  corpo = telaOrigens();
+  else if(S.tela==='empresas') corpo = telaEmpresas();
+  else if(S.tela==='usuarios') corpo = telaUsuarios();
+
+  const nf = fila().length;
+  app.innerHTML =
+    '<header class="top"><div class="topin">'+
+      '<div class="marca">'+marcaSVG(34)+'<div><b>CONTAS POR EMPRESA</b><span>'+SISTEMA.casa.toUpperCase()+'</span></div></div>'+
+      '<div class="quem"><b>'+esc(S.perfil? (S.perfil.nome||S.perfil.email) : '')+'</b>'+
+        esc(papel()||'')+' · <a href="#" onclick="sair();return false">sair</a></div>'+
+    '</div></header>'+
+    '<div class="wrap">'+
+      '<nav class="abas">'+
+        aba('painel','Painel')+
+        aba('fila','Apontar depois'+(nf?'<span class="bad">'+nf+'</span>':''))+
+        aba('origens','Cartões e contas')+
+        aba('empresas','Empresas')+
+        (podeUsuarios()? aba('usuarios','Usuários') : '')+
+      '</nav>'+
+      (S.msg? '<div class="'+S.msgTipo+'">'+esc(S.msg)+'</div>' : '')+
+      corpo+
+    '</div>'+
+    (S.modal || '');
+}
+function aba(id,rot){ return '<button class="'+(S.tela===id?'on':'')+'" onclick="irPara(\''+id+'\')">'+rot+'</button>'; }
+function irPara(t){ S.tela=t; S.msg=null; render(); }
+
+function telaLogin(){
+  return '<div class="login">'+
+    '<div style="margin-bottom:14px">'+marcaSVG(64)+'</div>'+
+    '<h2 style="margin:0 0 2px;letter-spacing:.5px">CONTAS POR EMPRESA</h2>'+
+    '<div style="color:#9a9a9a;font-size:12px;letter-spacing:2px;margin-bottom:18px">'+SISTEMA.casa.toUpperCase()+'</div>'+
+    (S.msg? '<div class="'+S.msgTipo+'">'+esc(S.msg)+'</div>' : '')+
+    '<div class="card">'+
+      '<label>E-mail</label><input id="lg-email" type="email" autocomplete="username">'+
+      '<label>Senha</label><input id="lg-senha" type="password" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')entrar()">'+
+      '<div style="margin-top:14px"><button class="bt" style="width:100%" onclick="entrar()" '+(S.carregando?'disabled':'')+'>'+
+        (S.carregando?'Entrando…':'Entrar')+'</button></div>'+
+    '</div>'+
+    '<div style="color:#5a5a5a;font-size:11px">'+SISTEMA.codigo+' '+SISTEMA.versao+'</div>'+
+  '</div>';
+}
+
+/* ---------- PAINEL: resumo fechado + caixas por CNPJ ---------- */
+function telaPainel(){
+  const doMesTodos = S.movimentos.filter(doMes);
+  const t = totais(doMesTodos);
+  const soltas = fila().length;
+
+  let h = '<div class="card">'+
+    '<div class="resumo" onclick="S.resumoAberto=!S.resumoAberto;render()">'+
+      '<span class="seta">'+(S.resumoAberto?'▼':'▶')+'</span>'+
+      '<h3 style="margin:0">RESUMO GERAL</h3>'+
+      '<span style="margin-left:auto;color:#9a9a9a;font-size:12px">'+
+        (S.resumoAberto?'clique para fechar':'saldo '+brl(t.saldo))+'</span>'+
+    '</div>'+
+    (S.resumoAberto ? '<div class="kpis">'+
+      kpi('Entradas', brl(t.ent))+
+      kpi('Saídas', brl(t.sai))+
+      kpi('Saldo', brl(t.saldo))+
+      kpi('Saídas pagas', t.pct+'%')+
+      kpi('Sem empresa', soltas+(soltas===1?' saída':' saídas'))+
+    '</div>' : '')+
+  '</div>';
+
+  h += '<div class="card" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'+
+      '<div style="max-width:190px"><label>Mês de referência</label>'+
+      '<input type="month" value="'+S.mes+'" onchange="S.mes=this.value;render()"></div>'+
+      (podeEditar()? '<button class="bt" onclick="abrirLancamento(\'saida\')">− Lançar saída</button>'+
+                     '<button class="bt g" onclick="abrirLancamento(\'entrada\')">+ Lançar entrada</button>' : '')+
+    '</div>';
+
+  if(!S.empresas.length) return h + '<div class="card"><div class="vazio">Nenhuma empresa cadastrada ainda. Vá em <b>Empresas</b>.</div></div>';
+
+  h += '<div class="grade">' + S.empresas.map(caixa).join('') + '</div>';
+  return h;
+}
+function kpi(t,v){ return '<div class="kpi"><small>'+t+'</small><b>'+v+'</b></div>'; }
+
+function caixa(e){
+  const movs = movsDaEmpresa(e.id);
+  const t = totais(movs);
+  const aberta = S.aberta === e.id;
+  let h = '<div class="caixa'+(aberta?' aberta':'')+'" onclick="'+(aberta?'':'abrirCaixa(\''+e.id+'\')')+'">'+
+    '<div style="display:flex;align-items:flex-start;gap:8px">'+
+      '<div style="flex:1">'+
+        '<div class="cnpj">'+esc(mascaraCNPJ(e.cnpj))+'</div>'+
+        '<div class="nome">'+esc(e.apelido||e.razao_social)+'</div>'+
+      '</div>'+
+      (aberta? '<button class="bt g mini" onclick="event.stopPropagation();S.aberta=null;render()">fechar ✕</button>':'')+
+    '</div>'+
+    '<div class="barra"><i style="width:'+t.pct+'%"></i></div>'+
+    '<div class="miniln"><span>'+t.pct+'% pago</span><span>'+brl(t.pago)+' de '+brl(t.sai)+'</span></div>'+
+    '<div class="miniln"><span>entradas '+brl(t.ent)+'</span>'+
+      '<span style="color:'+(t.saldo>=0?'var(--verde)':'var(--vermelho)')+'">saldo '+brl(t.saldo)+'</span></div>';
+
+  if(aberta){
+    h += '<div style="margin-top:14px">'+ tabelaMovimentos(movs) +'</div>';
   }
-
-  APP.perfil     = perfil.data || null;
-  APP.empresas   = empresas.data || [];
-  APP.movimentos = movimentos.data || [];
-  APP.origens    = origens.data || [];
-  APP.regras     = regras.data || [];
-  desenhar();
+  return h + '</div>';
 }
+function abrirCaixa(id){ S.aberta = id; render(); }
 
-/* ---------- números ---------- */
-/* Tudo que a tela mostra é do MÊS selecionado. */
-function doMes(){ return APP.movimentos.filter(m => (m.data||'').slice(0,7) === APP.mes); }
-const soma = a => a.reduce((s,m)=>s+Number(m.valor||0),0);
-
-function resumoEmpresa(id){
-  const meus = doMes().filter(m => id==='sem' ? !m.empresa_id : m.empresa_id===id);
-  const recebido = soma(meus.filter(m=>m.tipo==='entrada'));
-  const gasto    = soma(meus.filter(m=>m.tipo==='saida'));
-  return { recebido, gasto, saldo: recebido-gasto, qtd: meus.length };
-}
-function soltos(){ return APP.movimentos.filter(m => !m.empresa_id); }
-function soltosNoMes(){ return doMes().filter(m => !m.empresa_id); }
-
-/* ---------- tela principal ---------- */
-function desenhar(){
-  const mes = doMes();
-  const recebido = soma(mes.filter(m=>m.tipo==='entrada'));
-  const gasto    = soma(mes.filter(m=>m.tipo==='saida'));
-  const saldo    = recebido - gasto;
-  const nSoltos  = soltos().length;
-
-  const ids = APP.empresas.map(e=>e.id);
-  if(soltosNoMes().length) ids.push('sem');
-  const caixas = ids.map(caixaHTML).join('');
-
-  $('#app').innerHTML = `
-    <header class="topo"><div class="topo-in">
-      ${marcaSVG(30)}
-      <div class="marca">Contas <span>por empresa</span></div>
-      <div class="topo-dir">
-        <button class="btn btn-sm" onclick="abrirEmpresas()">Empresas</button>
-        ${podeEditar()?`<button class="btn btn-sm btn-forte" onclick="abrirMovimento()">Lançar</button>`:''}
-        <button class="btn btn-sm" onclick="sair()" title="Sair">Sair</button>
-      </div>
-    </div></header>
-
-    <div class="wrap">
-      <section class="painel">
-        <h1>Saldo de ${esc(fmtMes(APP.mes))}</h1>
-        <div class="total num ${saldo<0?'neg':''}"><small>R$</small>${brl(saldo)}</div>
-        <div class="par">
-          <div><em>Recebido</em><b class="num ent">R$ ${brl(recebido)}</b></div>
-          <div><em>Gasto</em><b class="num sai">R$ ${brl(gasto)}</b></div>
-          <div><em>Movimentos</em><b class="num">${mes.length}</b></div>
-        </div>
-
-        ${nSoltos ? `<div class="fila">
-          <div class="msg"><b>${nSoltos} ${nSoltos===1?'saída ainda sem empresa':'saídas ainda sem empresa'}</b>
-            <div style="color:var(--ink-2);font-size:12.5px">Aponte quando lembrar. Enquanto isso não entram na conta de nenhuma PJ.</div>
-          </div>
-          <button class="btn btn-sm" onclick="abrirFila()">Apontar agora</button>
-        </div>` : ''}
-      </section>
-
-      <div class="periodo">
-        <div class="titulo">${esc(fmtMes(APP.mes))}</div>
-        <div class="setas">
-          <button class="btn btn-sm" onclick="mudarMes(-1)" title="Mês anterior">‹</button>
-          <button class="btn btn-sm" onclick="irHoje()">Hoje</button>
-          <button class="btn btn-sm" onclick="mudarMes(1)" title="Mês seguinte">›</button>
-        </div>
-      </div>
-
-      ${APP.empresas.length===0 ? primeiroPasso() : `<div class="caixas">${caixas}</div>`}
-
-      <div class="rodape-selo">
-        ${marcaSVG(16)}
-        <span>${esc(SISTEMA.casa)} · ${esc(SISTEMA.codigo)} ${esc(SISTEMA.versao)} · ${esc(SISTEMA.data)}</span>
-      </div>
-    </div>`;
-}
-
-function mudarMes(n){
-  APP.mes = n<0 ? mesAnterior(APP.mes) : mesSeguinte(APP.mes);
-  APP.filtro.empresa = 'todas';
-  desenhar();
-}
-function irHoje(){ APP.mes = hoje().slice(0,7); APP.filtro.empresa='todas'; desenhar(); }
-
-function primeiroPasso(){
-  return `<div class="vazio">
-    <p>Comece cadastrando os CNPJs. Depois é só lançar as entradas e saídas.</p>
-    <button class="btn btn-forte" onclick="abrirEmpresas()">Cadastrar empresas</button></div>`;
-}
-
-function caixaHTML(id){
-  const emp = id==='sem' ? null : empresaPor(id);
-  if(id!=='sem' && !emp) return '';
-  const nome = emp ? (emp.apelido||emp.nome) : 'Sem empresa';
-  const cnpj = emp ? fmtCnpj(emp.cnpj) : 'ainda não apontadas';
-  const r = resumoEmpresa(id);
-  if(APP.filtro.empresa === id) return caixaAbertaHTML(id, nome, cnpj, r);
-
-  return `<button class="cx ${id==='sem'?'solta':''}" onclick="alternarCaixa('${id}')">
-    <div class="cx-nome">${esc(nome)}</div>
-    <div class="cx-cnpj num">${esc(cnpj)}</div>
-    <div class="cx-valor num ${r.saldo<0?'neg':''}">R$ ${brl(id==='sem' ? r.gasto : r.saldo)}</div>
-    <div class="cx-pe">
-      ${id==='sem'
-        ? `${r.qtd} ${r.qtd===1?'movimento':'movimentos'}`
-        : `<u>+${brl(r.recebido)}</u> · <s>−${brl(r.gasto)}</s>`}
-    </div>
-  </button>`;
-}
-
-function caixaAbertaHTML(id, nome, cnpj, r){
-  return `<div class="cx-aberta">
-    <div class="cx-topo">
-      <div style="min-width:0">
-        <div class="cx-nome">${esc(nome)}</div>
-        <div class="cx-cnpj num">${esc(cnpj)}</div>
-      </div>
-      <div class="fechar">
-        ${podeEditar() && id!=='sem' ? `<button class="btn btn-sm btn-forte" onclick="abrirMovimento(null,'${id}')">Lançar aqui</button>`:''}
-        <button class="btn btn-sm" onclick="alternarCaixa('${id}')" title="Fechar">Fechar</button>
-      </div>
-    </div>
-
-    <div class="cx-nums">
-      <div class="cx-num"><em>Recebido no mês</em><b class="num ent">R$ ${brl(r.recebido)}</b></div>
-      <div class="cx-num"><em>Gasto no mês</em><b class="num sai">R$ ${brl(r.gasto)}</b></div>
-      <div class="cx-num"><em>Saldo</em><b class="num ${r.saldo<0?'neg':''}">R$ ${brl(r.saldo)}</b></div>
-    </div>
-
-    <div class="filtros">
-      <button class="chip" aria-pressed="${APP.filtro.tipo==='todos'}" onclick="filtrarTipo('todos')">Tudo</button>
-      <button class="chip" aria-pressed="${APP.filtro.tipo==='entrada'}" onclick="filtrarTipo('entrada')">Entradas</button>
-      <button class="chip" aria-pressed="${APP.filtro.tipo==='saida'}" onclick="filtrarTipo('saida')">Saídas</button>
-      <input class="busca" placeholder="Buscar fornecedor, nota, origem" value="${esc(APP.filtro.busca)}" oninput="APP.filtro.busca=this.value;redesenharLista()">
-    </div>
-    <div class="lista" id="lista">${listaHTML()}</div>
-  </div>`;
-}
-
-function alternarCaixa(id){
-  APP.filtro.empresa = (APP.filtro.empresa===id) ? 'todas' : id;
-  APP.filtro.busca = '';
-  desenhar();
-}
-function filtrarTipo(t){ APP.filtro.tipo = t; desenhar(); }
-function redesenharLista(){ const n = el('lista'); if(n) n.innerHTML = listaHTML(); }
-
-function filtrados(){
-  const b = APP.filtro.busca.trim().toLowerCase();
-  return doMes().filter(m => {
-    if(APP.filtro.tipo!=='todos' && m.tipo!==APP.filtro.tipo) return false;
-    if(APP.filtro.empresa==='sem' && m.empresa_id) return false;
-    if(APP.filtro.empresa!=='todas' && APP.filtro.empresa!=='sem' && m.empresa_id!==APP.filtro.empresa) return false;
-    if(b){
-      const o = origemPor(m.origem_id);
-      const alvo = [m.fornecedor,m.descricao,m.nf_numero,m.categoria,o?.nome].join(' ').toLowerCase();
-      if(!alvo.includes(b)) return false;
-    }
-    return true;
-  });
-}
-
-function listaHTML(){
-  const itens = filtrados();
-  if(!itens.length) return `<div class="vazio"><p>Nenhum movimento com esses filtros.</p></div>`;
-  const grupos = {};
-  itens.forEach(m => { const k = m.data || '0000-00-00'; (grupos[k] = grupos[k] || []).push(m); });
-  return Object.keys(grupos).sort().reverse().map(k => {
-    const g = grupos[k];
-    const liq = soma(g.filter(x=>x.tipo==='entrada')) - soma(g.filter(x=>x.tipo==='saida'));
-    return `<div class="dia">${fmtData(k)}<span class="num">${liq<0?'−':'+'}R$ ${brl(Math.abs(liq))}</span></div>` +
-      g.map(linhaHTML).join('');
+function tabelaMovimentos(movs){
+  if(!movs.length) return '<div class="vazio">Nenhum movimento neste mês.</div>';
+  const linhas = movs.slice().sort((a,b)=> (b.data_movimento||'').localeCompare(a.data_movimento||''))
+   .map(m=>{
+    const ent = m.tipo==='entrada';
+    return '<tr class="'+(m.pago&&!ent?'pago':'')+'">'+
+      '<td>'+dataBR(m.data_movimento)+'</td>'+
+      '<td><span class="tag '+(ent?'e':'s')+'">'+(ent?'entrada':'saída')+'</span></td>'+
+      '<td><b>'+esc(m.fornecedor||m.descricao||'—')+'</b>'+
+        (m.descricao&&m.fornecedor? '<div style="color:#9a9a9a;font-size:12px">'+esc(m.descricao)+'</div>':'')+
+        (m.cnpj_fornecedor? '<div style="color:#6a6a6a;font-size:11px">'+esc(mascaraCNPJ(m.cnpj_fornecedor))+'</div>':'')+
+        (m.lido_por_ia? '<div style="color:#6a6a6a;font-size:11px">lido do documento</div>':'')+
+      '</td>'+
+      '<td>'+esc(nomeOrigem(m.origem_id))+'</td>'+
+      '<td style="text-align:right;white-space:nowrap"><b>'+brl(m.valor)+'</b></td>'+
+      '<td style="white-space:nowrap">'+
+        (ent? '' :
+          (podeEditar()? '<button class="bt '+(m.pago?'g':'')+' mini" onclick="event.stopPropagation();alternarPago(\''+m.id+'\')">'+(m.pago?'reabrir':'pagar')+'</button> ' : (m.pago?'paga':'em aberto')))+
+        (podeEditar()? '<button class="bt g mini" onclick="event.stopPropagation();editarMov(\''+m.id+'\')">editar</button> ' : '')+
+        (m.anexo_path? '<button class="bt g mini" onclick="event.stopPropagation();verAnexo(\''+m.anexo_path+'\')">nota</button> ' : '')+
+        (podeApagar()? '<button class="bt g mini" onclick="event.stopPropagation();excluirMov(\''+m.id+'\')">✕</button>' : '')+
+      '</td></tr>';
   }).join('');
+  return '<table><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Origem</th>'+
+         '<th style="text-align:right">Valor</th><th></th></tr></thead><tbody>'+linhas+'</tbody></table>';
 }
 
-function linhaHTML(m){
-  const emp = empresaPor(m.empresa_id);
-  const o = origemPor(m.origem_id);
-  const ent = m.tipo==='entrada';
-  const info = [
-    emp ? (emp.apelido||emp.nome) : '<span class="solto">sem empresa</span>',
-    o ? esc(o.nome) : null,
-    m.nf_numero ? 'NF '+esc(m.nf_numero) : null,
-    m.categoria ? esc(m.categoria) : null
-  ].filter(Boolean).join(' · ');
+/* ---------- FILA: saídas sem empresa ---------- */
+function telaFila(){
+  const lista = fila();
+  let h = '<div class="card"><h3>SAÍDAS SEM EMPRESA</h3>'+
+    '<div class="aviso">Toda entrada exige um CNPJ. A saída pode entrar solta e ficar aqui até você apontar de quem foi. '+
+    'Ao apontar, dá para gravar a regra: da próxima vez o mesmo fornecedor já cai na empresa certa.</div>';
+  if(!lista.length) return h+'<div class="vazio">Nada pendente. Fila limpa.</div></div>';
 
-  return `<div class="linha">
-    <div class="faixa" style="background:${emp?corDe(emp):'#C9CDC6'}"></div>
-    <div class="l-meio">
-      <div class="l-forn">${esc(m.fornecedor||m.descricao||(ent?'Entrada':'Saída'))}</div>
-      <div class="l-info">${info}</div>
-    </div>
-    <div class="l-dir">
-      <div class="l-valor num ${ent?'ent':'sai'}">${ent?'+':'−'}${brl(m.valor)}</div>
-      <div class="l-sub">${ent?'entrada':'saída'}</div>
-    </div>
-    ${podeEditar() && !m.empresa_id ? `<div class="apontar">
-      <span style="font-size:12.5px;color:var(--ink-2)">De qual empresa foi?</span>
-      ${seletorEmpresa(m.id, m.fornecedor)}
-    </div>`:''}
-    ${podeEditar()?`<div class="acoes">
-      <button class="btn-txt" onclick="abrirMovimento('${m.id}')">Editar</button>
-      ${m.anexo_path?`<button class="btn-txt" onclick="verNota('${esc(m.anexo_path)}')">Ver nota</button>`:''}
-    </div>`:''}
-  </div>`;
+  h += lista.map(m=>{
+    const sug = sugerirEmpresa(m);
+    return '<div style="border:1px solid var(--linha);border-radius:10px;padding:11px;margin-bottom:9px">'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
+        '<div style="flex:1;min-width:200px"><b>'+esc(m.fornecedor||m.descricao||'(sem descrição)')+'</b>'+
+          '<div style="color:#9a9a9a;font-size:12px">'+dataBR(m.data_movimento)+' · '+brl(m.valor)+
+          ' · '+esc(nomeOrigem(m.origem_id))+'</div>'+
+          (m.cnpj_fornecedor? '<div style="color:#6a6a6a;font-size:11px">'+esc(mascaraCNPJ(m.cnpj_fornecedor))+'</div>':'')+
+        '</div>'+
+        '<div style="min-width:200px"><select id="fila-'+m.id+'">'+
+          '<option value="">— escolher empresa —</option>'+
+          S.empresas.map(e=>'<option value="'+e.id+'"'+(sug===e.id?' selected':'')+'>'+esc(e.apelido||e.razao_social)+'</option>').join('')+
+        '</select></div>'+
+        '<div><button class="bt" onclick="apontar(\''+m.id+'\')">apontar</button></div>'+
+      '</div>'+
+      '<label style="text-transform:none;letter-spacing:0;color:#9a9a9a;display:flex;gap:6px;align-items:center;margin-top:8px">'+
+        '<input type="checkbox" id="regra-'+m.id+'" style="width:auto" checked> gravar regra para este fornecedor'+
+      '</label>'+
+      (sug? '<div style="color:#8a7a3a;font-size:11.5px;margin-top:4px">sugerido por regra já gravada</div>':'')+
+    '</div>';
+  }).join('');
+  return h+'</div>';
 }
-
-/* seletor rápido usado na fila e nas linhas soltas */
-function seletorEmpresa(movId, fornecedor){
-  const sug = sugerirEmpresa(fornecedor);
-  const ops = APP.empresas.map(e =>
-    `<option value="${e.id}">${esc(e.apelido||e.nome)}${sug===e.id?' (sugerida)':''}</option>`).join('');
-  return `<select onchange="apontarEmpresa('${movId}', this.value)">
-    <option value="">— escolher —</option>${ops}</select>`;
-}
-
-/* ---------- memória de fornecedor ---------- */
-function sugerirEmpresa(fornecedor){
-  const f = String(fornecedor||'').trim().toLowerCase();
-  if(!f) return null;
-  const r = APP.regras.find(x => String(x.fornecedor||'').toLowerCase() === f);
+function sugerirEmpresa(m){
+  const cnpj = soDig(m.cnpj_fornecedor);
+  let r = cnpj ? S.regras.find(x=>x.tipo_chave==='cnpj' && soDig(x.chave)===cnpj) : null;
+  if(!r && m.fornecedor) r = S.regras.find(x=>x.tipo_chave==='nome' && norm(x.chave)===norm(m.fornecedor));
+  if(!r && m.origem_id)  r = S.regras.find(x=>x.tipo_chave==='origem' && x.chave===m.origem_id);
   return r ? r.empresa_id : null;
 }
+async function apontar(id){
+  const empresa = val('fila-'+id);
+  if(!empresa) return aviso('Escolha a empresa.','erro');
+  const m = S.movimentos.find(x=>x.id===id);
+  const { error } = await sb.from('movimentos').update({ empresa_id:empresa }).eq('id',id);
+  if(error) return aviso('Não gravou: '+error.message,'erro');
+  m.empresa_id = empresa;
 
-async function aprender(fornecedor, empresaId){
-  const f = String(fornecedor||'').trim();
-  if(!f || !empresaId) return;
-  const atual = APP.regras.find(x => String(x.fornecedor||'').toLowerCase() === f.toLowerCase());
-  if(atual){
-    await APP.sb.from('regras_fornecedor')
-      .update({ empresa_id: empresaId, vezes: (atual.vezes||1)+1, atualizado_em: new Date().toISOString() })
-      .eq('id', atual.id);
-  }else{
-    await APP.sb.from('regras_fornecedor').insert({ fornecedor: f, empresa_id: empresaId });
+  if(chk('regra-'+id)){
+    const chave = soDig(m.cnpj_fornecedor) || m.fornecedor || m.origem_id;
+    const tipo  = soDig(m.cnpj_fornecedor) ? 'cnpj' : (m.fornecedor ? 'nome' : 'origem');
+    if(chave){
+      const { error:e2 } = await sb.from('regras_fornecedor')
+        .upsert({ chave:String(chave), tipo_chave:tipo, empresa_id:empresa, criado_por:S.user.id },
+                { onConflict:'tipo_chave,chave' });
+      if(!e2){ const { data } = await sb.from('regras_fornecedor').select('*'); S.regras = data||S.regras; }
+    }
   }
+  aviso('Apontado para '+nomeEmpresa(empresa)+'.','ok');
 }
 
-async function apontarEmpresa(movId, empresaId){
-  if(!empresaId) return;
-  const m = APP.movimentos.find(x=>x.id===movId);
-  const { error } = await APP.sb.from('movimentos').update({ empresa_id: empresaId }).eq('id', movId);
-  if(error) return alert('Não deu para apontar: ' + error.message);
-  await aprender(m?.fornecedor, empresaId);
-  await carregarTudo();
+/* ---------- ORIGENS ---------- */
+function telaOrigens(){
+  let h = '<div class="card"><h3>CARTÕES E CONTAS</h3>'+
+    '<div class="aviso">As origens nascem conforme aparecem no extrato — não precisa cadastrar antes. '+
+    'Podem ser de terceiros (familiares), e é por elas que se descobre quem pagou.</div>'+
+    (podeEditar()? '<button class="bt" onclick="abrirOrigem()">+ Nova origem</button>':'');
+  if(!S.origens.length) return h+'<div class="vazio">Nenhuma origem ainda.</div></div>';
+  h += '<table style="margin-top:12px"><thead><tr><th>Nome</th><th>Tipo</th><th>Final / conta</th><th>Titular</th>'+
+       '<th>Empresa padrão</th><th></th></tr></thead><tbody>'+
+    S.origens.map(o=>'<tr><td><b>'+esc(o.nome)+'</b></td><td>'+esc(o.tipo||'')+'</td>'+
+      '<td>'+esc(o.identificador||'—')+'</td><td>'+esc(o.titular||'—')+'</td>'+
+      '<td>'+(o.empresa_id? esc(nomeEmpresa(o.empresa_id)) : '—')+'</td>'+
+      '<td>'+(podeEditar()? '<button class="bt g mini" onclick="abrirOrigem(\''+o.id+'\')">editar</button>':'')+'</td></tr>').join('')+
+    '</tbody></table></div>';
+  return h;
 }
 
-/* ---------- fila de sem empresa ---------- */
-function abrirFila(){
-  const lista = soltos();
-  if(!lista.length){ return modal(`<h2>Nada pendente</h2>
-    <p class="dica">Todos os movimentos já estão apontados para uma empresa.</p>
-    <div class="rodape"><button class="btn btn-forte" onclick="fecharModal()">Fechar</button></div>`); }
-
-  const linhas = lista.map(m => {
-    const o = origemPor(m.origem_id);
-    return `<tr>
-      <td>
-        <b>${esc(m.fornecedor||m.descricao||'Sem fornecedor')}</b>
-        <div style="color:var(--ink-3);font-size:12.5px">
-          ${fmtData(m.data)}${o?' · '+esc(o.nome):''} · <span class="num">R$ ${brl(m.valor)}</span>
-        </div>
-      </td>
-      <td>${seletorEmpresa(m.id, m.fornecedor)}</td>
-    </tr>`;
-  }).join('');
-
-  modal(`
-    <h2>Apontar empresa</h2>
-    <p class="dica">${lista.length} ${lista.length===1?'movimento ficou':'movimentos ficaram'} sem empresa.
-    Aponte os que você lembrar — o que sobrar continua aqui.</p>
-    <table class="emp">${linhas}</table>
-    <div class="rodape"><button class="btn btn-forte" onclick="fecharModal()">Fechar</button></div>`);
+/* ---------- EMPRESAS ---------- */
+function telaEmpresas(){
+  let h = '<div class="card"><h3>EMPRESAS</h3>'+
+    (podeUsuarios()? '<button class="bt" onclick="abrirEmpresa()">+ Nova empresa</button>':'');
+  if(!S.empresas.length) return h+'<div class="vazio">Nenhuma empresa cadastrada.</div></div>';
+  h += '<table style="margin-top:12px"><thead><tr><th>CNPJ</th><th>Razão social</th><th>Apelido</th>'+
+       '<th style="text-align:right">Movimentos</th><th></th></tr></thead><tbody>'+
+    S.empresas.map(e=>{
+      const n = S.movimentos.filter(m=>m.empresa_id===e.id).length;
+      return '<tr><td>'+esc(mascaraCNPJ(e.cnpj))+'</td><td>'+esc(e.razao_social)+'</td>'+
+        '<td>'+esc(e.apelido||'—')+'</td><td style="text-align:right">'+n+'</td>'+
+        '<td>'+(podeUsuarios()? '<button class="bt g mini" onclick="abrirEmpresa(\''+e.id+'\')">editar</button>':'')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  return h;
 }
 
-/* ---------- lançar / editar movimento ---------- */
-let ARQUIVO_NOTA = null;
-
-function abrirMovimento(id, empresaFixa){
-  ARQUIVO_NOTA = null;
-  const m = id ? APP.movimentos.find(x=>x.id===id) : null;
-  APP.novo.tipo = m ? m.tipo : 'saida';
-  const alvo = m ? m.empresa_id : (empresaFixa && empresaFixa!=='sem' ? empresaFixa : null);
-  desenharFormMovimento(m, alvo);
+/* ---------- USUÁRIOS ---------- */
+function telaUsuarios(){
+  const visiveis = S.perfis.filter(p=> papel()==='mestre' ? true : p.papel!=='mestre');
+  let h = '<div class="card"><h3>USUÁRIOS</h3>'+
+    '<div class="aviso">Papéis: <b>dono</b> vê tudo e cria usuários · <b>operador</b> lança e edita · '+
+    '<b>leitura</b> só consulta. A trava por empresa limita o que cada um enxerga.</div>'+
+    '<button class="bt" onclick="abrirUsuario()">+ Novo usuário</button>'+
+    '<table style="margin-top:12px"><thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Situação</th><th></th></tr></thead><tbody>'+
+    visiveis.map(p=>'<tr><td><b>'+esc(p.nome||'—')+'</b></td><td>'+esc(p.email||'')+'</td>'+
+      '<td>'+esc(p.papel)+'</td><td>'+(p.ativo?'ativo':'<span style="color:#c8452f">inativo</span>')+'</td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="bt g mini" onclick="acaoUsuario(\'senha\',\''+p.id+'\')">senha</button> '+
+        '<button class="bt g mini" onclick="acaoUsuario(\'ativar\',\''+p.id+'\','+(!p.ativo)+')">'+(p.ativo?'desativar':'ativar')+'</button> '+
+        '<button class="bt g mini" onclick="acaoUsuario(\'excluir\',\''+p.id+'\')">✕</button>'+
+      '</td></tr>').join('')+'</tbody></table></div>';
+  return h;
 }
 
-function desenharFormMovimento(m, alvo){
-  const ent = APP.novo.tipo === 'entrada';
-  const ops = APP.empresas.map(e => `<option value="${e.id}" ${alvo===e.id?'selected':''}>${esc(e.apelido||e.nome)}</option>`).join('');
-  const origensOps = APP.origens.map(o => `<option value="${esc(o.nome)}">`).join('');
-  const cats = [...new Set(APP.movimentos.map(x=>x.categoria).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('');
-  const oAtual = m ? origemPor(m.origem_id) : null;
+/* ===================== modais ===================== */
+function fecharModal(){ S.modal=null; render(); }
+function abrirModal(html){ S.modal = '<div class="modalbg" onclick="if(event.target===this)fecharModal()"><div class="modal">'+html+'</div></div>'; render(); }
 
-  modal(`
-    <h2>${m?'Editar movimento':'Lançar movimento'}</h2>
-    <p class="dica">${m?'Altere o que precisar e salve.':'Entrada é dinheiro que chegou. Saída é dinheiro que saiu.'}</p>
-
-    <div class="tipos">
-      <button class="ent" aria-pressed="${ent}"  onclick="trocarTipo('entrada')">↓ Entrada</button>
-      <button class="sai" aria-pressed="${!ent}" onclick="trocarTipo('saida')">↑ Saída</button>
-    </div>
-
-    ${(!m && !ent)?`<div class="leitor">
-      <p>Anexe a nota em PDF ou foto e os campos se preenchem.</p>
-      <input type="file" id="arq" accept="application/pdf,image/*" onchange="lerNota()">
-      <div id="leitura"></div>
-    </div>`:''}
-
-    <div class="campo">
-      <label for="lemp">Empresa ${ent?'(obrigatória)':'(pode deixar em branco)'}</label>
-      <select id="lemp"><option value="">${ent?'— escolher —':'— apontar depois —'}</option>${ops}</select>
-      ${ent
-        ? `<div class="obs">Toda entrada precisa de um CNPJ.</div>`
-        : `<div class="obs">Sem empresa, o movimento vai para a fila e você aponta quando lembrar.</div>`}
-    </div>
-
-    <div class="campo"><label for="lforn">${ent?'De quem veio':'Fornecedor'}</label>
-      <input id="lforn" value="${esc(m?.fornecedor||'')}" oninput="palpiteEmpresa()"></div>
-    <div class="dica" id="palpite" style="margin:-8px 0 12px"></div>
-
-    <div class="dupla">
-      <div class="campo"><label for="lval">Valor</label><input id="lval" inputmode="decimal" value="${m?brl(m.valor):''}"></div>
-      <div class="campo"><label for="ldata">Data</label><input id="ldata" type="date" value="${esc(m?.data||hoje())}"></div>
-    </div>
-
-    <div class="dupla">
-      <div class="campo"><label for="lorig">Origem (cartão ou conta)</label>
-        <input id="lorig" list="origens" value="${esc(oAtual?.nome||'')}" placeholder="Ex: Nubank PJ, Cartão Itaú">
-        <datalist id="origens">${origensOps}</datalist>
-        <div class="obs">Digite livre. Origem nova é criada sozinha.</div>
-      </div>
-      <div class="campo"><label for="lcat">Categoria</label><input id="lcat" list="cats" value="${esc(m?.categoria||'')}">
-        <datalist id="cats">${cats}</datalist></div>
-    </div>
-
-    ${!ent?`<div class="campo"><label for="lnf">Número da nota</label><input id="lnf" value="${esc(m?.nf_numero||'')}"></div>`:''}
-    <div class="campo"><label for="ldesc">Descrição</label><textarea id="ldesc">${esc(m?.descricao||'')}</textarea></div>
-
-    <div class="erro" id="lerr"></div>
-    <div class="rodape">
-      ${m?`<button class="btn esq" onclick="excluirMovimento('${m.id}')">Excluir</button>`:''}
-      <button class="btn" onclick="fecharModal()">Cancelar</button>
-      <button class="btn btn-forte" onclick="salvarMovimento(${m?`'${m.id}'`:'null'})">Salvar</button>
-    </div>`);
+/* --- lançamento --- */
+let _edit = null;
+function abrirLancamento(tipo, m){
+  _edit = m || null;
+  const t = m ? m.tipo : tipo;
+  const ent = t==='entrada';
+  abrirModal(
+    '<h2>'+(m?'Editar ':'')+(ent?'Entrada':'Saída')+'</h2>'+
+    '<div style="color:#9a9a9a;font-size:12px;margin-bottom:8px">'+
+      (ent? 'Entrada exige a empresa.' : 'A saída pode ficar sem empresa e ir para a fila.')+'</div>'+
+    '<input type="hidden" id="mv-tipo" value="'+t+'">'+
+    (podeEditar()? '<div class="card" style="background:#101010;margin-bottom:12px">'+
+      '<label>Anexar nota (PDF ou foto) — o sistema tenta ler sozinho</label>'+
+      '<input type="file" id="mv-arq" accept="image/*,application/pdf" onchange="lerDocumento()">'+
+      '<div id="mv-leitura" style="font-size:12px;color:#9a9a9a;margin-top:6px"></div></div>' : '')+
+    '<div class="lin">'+
+      '<div><label>Data</label><input type="date" id="mv-data" value="'+(m? (m.data_movimento||'').slice(0,10) : hojeISO())+'"></div>'+
+      '<div><label>Valor (R$)</label><input type="number" step="0.01" id="mv-valor" value="'+(m? m.valor : '')+'"></div>'+
+    '</div>'+
+    '<label>Empresa'+(ent?' (obrigatória)':' (pode deixar em branco)')+'</label>'+
+    '<select id="mv-empresa"><option value="">— apontar depois —</option>'+
+      S.empresas.map(e=>'<option value="'+e.id+'"'+(m&&m.empresa_id===e.id?' selected':'')+'>'+esc(e.apelido||e.razao_social)+'</option>').join('')+
+    '</select>'+
+    '<label>Origem (cartão / conta)</label>'+
+    '<select id="mv-origem"><option value="">—</option>'+
+      S.origens.map(o=>'<option value="'+o.id+'"'+(m&&m.origem_id===o.id?' selected':'')+'>'+esc(o.nome)+(o.identificador?' ·'+esc(o.identificador):'')+'</option>').join('')+
+    '</select>'+
+    '<label>'+(ent?'Pagador / cliente':'Fornecedor')+'</label>'+
+    '<input id="mv-forn" value="'+esc(m?m.fornecedor:'')+'">'+
+    '<div class="lin">'+
+      '<div><label>CNPJ do documento</label><input id="mv-cnpj" value="'+esc(m?mascaraCNPJ(m.cnpj_fornecedor||''):'')+'" oninput="this.value=mascaraCNPJ(this.value)"></div>'+
+      '<div><label>Categoria</label><input id="mv-cat" value="'+esc(m?m.categoria:'')+'"></div>'+
+    '</div>'+
+    '<label>Descrição</label><input id="mv-desc" value="'+esc(m?m.descricao:'')+'">'+
+    (!ent? '<label style="text-transform:none;letter-spacing:0;display:flex;gap:6px;align-items:center;margin-top:12px">'+
+      '<input type="checkbox" id="mv-pago" style="width:auto" '+(m&&m.pago?'checked':'')+'> já está paga</label>' : '')+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+      '<button class="bt" onclick="salvarMovimento()">Salvar</button>'+
+      '<button class="bt g" onclick="fecharModal()">Cancelar</button>'+
+    '</div>'
+  );
 }
+function hojeISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function editarMov(id){ const m = S.movimentos.find(x=>x.id===id); if(m) abrirLancamento(m.tipo, m); }
 
-function trocarTipo(t){
-  APP.novo.tipo = t;
-  /* preserva o que já foi digitado ao trocar entrada/saída */
-  const guardado = {
-    fornecedor: el('lforn')?.value || '',
-    valor: el('lval')?.value || '',
-    data: el('ldata')?.value || hoje(),
-    origem: el('lorig')?.value || '',
-    categoria: el('lcat')?.value || '',
-    descricao: el('ldesc')?.value || '',
-    empresa: el('lemp')?.value || ''
+async function salvarMovimento(){
+  const tipo = val('mv-tipo');
+  const empresa = val('mv-empresa') || null;
+  const valor = Number(val('mv-valor'));
+  if(!valor || valor<=0) return aviso('Informe o valor.','erro');
+  if(tipo==='entrada' && !empresa) return aviso('Entrada exige a empresa — é a regra do sistema.','erro');
+  const cnpj = soDig(val('mv-cnpj'));
+  if(cnpj && cnpj.length===14 && !validaCNPJ(cnpj)) return aviso('CNPJ do documento inválido.','erro');
+
+  const reg = {
+    tipo, empresa_id:empresa, origem_id: val('mv-origem')||null,
+    valor, data_movimento: val('mv-data')||hojeISO(),
+    fornecedor: val('mv-forn')||null, cnpj_fornecedor: cnpj||null,
+    categoria: val('mv-cat')||null, descricao: val('mv-desc')||null,
+    pago: tipo==='saida' ? chk('mv-pago') : true,
+    criado_por: S.user.id
   };
-  desenharFormMovimento(null, guardado.empresa || null);
-  if(el('lforn')) el('lforn').value = guardado.fornecedor;
-  if(el('lval'))  el('lval').value  = guardado.valor;
-  if(el('ldata')) el('ldata').value = guardado.data;
-  if(el('lorig')) el('lorig').value = guardado.origem;
-  if(el('lcat'))  el('lcat').value  = guardado.categoria;
-  if(el('ldesc')) el('ldesc').value = guardado.descricao;
-  palpiteEmpresa();
-}
+  if(reg.pago && tipo==='saida') reg.data_pagamento = reg.data_movimento;
+  if(_arquivoPendente){ const up = await subirAnexo(_arquivoPendente);
+    if(up){ reg.anexo_path = up.path; reg.anexo_nome = up.nome; reg.lido_por_ia = _lidoPorIA; } }
 
-/* sugere a empresa a partir do que já foi apontado antes para esse fornecedor */
-function palpiteEmpresa(){
-  const alvo = el('palpite'); if(!alvo) return;
-  const sug = sugerirEmpresa(el('lforn')?.value);
-  const sel = el('lemp');
-  if(sug && sel && !sel.value){
-    const e = empresaPor(sug);
-    sel.value = sug;
-    alvo.innerHTML = `Empresa preenchida como <b>${esc(e?.apelido||e?.nome||'')}</b> porque esse fornecedor já foi apontado assim antes. Troque se não for.`;
-  }else{
-    alvo.textContent = '';
-  }
-}
-
-/* garante a origem no banco — cria se ainda não existir */
-async function garantirOrigem(nome){
-  const n = String(nome||'').trim();
-  if(!n) return null;
-  const achou = APP.origens.find(o => o.nome.toLowerCase() === n.toLowerCase());
-  if(achou) return achou.id;
-  const tipo = /cart|visa|master|elo|credito|crédito/i.test(n) ? 'cartao'
-             : /banco|conta|nubank|ita|bradesco|caixa|santander|inter|sicoob|bb/i.test(n) ? 'conta'
-             : 'outro';
-  const { data, error } = await APP.sb.from('origens').insert({ nome: n, tipo }).select().single();
-  if(error) return null;
-  APP.origens.push(data);
-  return data.id;
-}
-
-async function salvarMovimento(id){
-  const tipo = APP.novo.tipo;
-  const valor = Number(String(el('lval').value).replace(/\./g,'').replace(',','.'));
-  const empresaId = el('lemp').value || null;
-  const fornecedor = el('lforn').value.trim();
-
-  if(tipo==='entrada' && !empresaId)
-    return el('lerr').textContent = 'Toda entrada precisa de uma empresa. Escolha o CNPJ que recebeu.';
-  if(!valor || valor<=0) return el('lerr').textContent = 'Informe o valor.';
-  if(!el('ldata').value) return el('lerr').textContent = 'Informe a data.';
-
-  el('lerr').textContent = 'Salvando…';
-
-  const origemId = await garantirOrigem(el('lorig').value);
-
-  const dados = {
-    tipo, valor,
-    data: el('ldata').value,
-    empresa_id: empresaId,
-    origem_id: origemId,
-    fornecedor,
-    categoria: el('lcat').value.trim(),
-    descricao: el('ldesc').value.trim(),
-    nf_numero: el('lnf') ? el('lnf').value.trim() : null
-  };
-
-  if(ARQUIVO_NOTA){
-    const nome = `${Date.now()}-${ARQUIVO_NOTA.name.replace(/[^\w.\-]/g,'_')}`;
-    const up = await APP.sb.storage.from('notas').upload(nome, ARQUIVO_NOTA, {contentType: ARQUIVO_NOTA.type || 'application/octet-stream'});
-    if(up.error) return el('lerr').textContent = 'O movimento não foi salvo: o anexo falhou. ' + up.error.message;
-    dados.anexo_path = up.data.path;
+  // se a saída ficou solta mas há regra para o fornecedor, aponta sozinho
+  if(tipo==='saida' && !empresa){
+    const sug = sugerirEmpresa(reg);
+    if(sug){ reg.empresa_id = sug; }
   }
 
-  const r = id ? await APP.sb.from('movimentos').update(dados).eq('id',id)
-               : await APP.sb.from('movimentos').insert(dados);
-  if(r.error) return el('lerr').textContent = r.error.message;
+  let res;
+  if(_edit) res = await sb.from('movimentos').update(reg).eq('id',_edit.id).select().maybeSingle();
+  else      res = await sb.from('movimentos').insert(reg).select().maybeSingle();
+  if(res.error) return aviso('Não gravou: '+res.error.message,'erro');
 
-  if(empresaId) await aprender(fornecedor, empresaId);
-  APP.mes = dados.data.slice(0,7);
-  fecharModal(); await carregarTudo();
+  if(_edit){ const i = S.movimentos.findIndex(x=>x.id===_edit.id); if(i>=0) S.movimentos[i]=res.data; }
+  else S.movimentos.unshift(res.data);
+  _edit=null; _arquivoPendente=null; _lidoPorIA=false;
+  S.modal=null;
+  aviso(reg.empresa_id ? 'Movimento gravado.' : 'Gravado sem empresa — está na fila "Apontar depois".','ok');
 }
 
-async function excluirMovimento(id){
+async function alternarPago(id){
+  const m = S.movimentos.find(x=>x.id===id); if(!m) return;
+  const novo = !m.pago;
+  const { error } = await sb.from('movimentos')
+    .update({ pago:novo, data_pagamento: novo? hojeISO() : null }).eq('id',id);
+  if(error) return aviso('Não gravou: '+error.message,'erro');
+  m.pago=novo; m.data_pagamento = novo? hojeISO() : null; render();
+}
+async function excluirMov(id){
   if(!confirm('Excluir este movimento?')) return;
-  await APP.sb.from('movimentos').delete().eq('id', id);
-  fecharModal(); await carregarTudo();
+  const { error } = await sb.from('movimentos').delete().eq('id',id);
+  if(error) return aviso('Não excluiu: '+error.message,'erro');
+  S.movimentos = S.movimentos.filter(x=>x.id!==id);
+  aviso('Excluído.','ok');
 }
 
-async function verNota(path){
-  const { data, error } = await APP.sb.storage.from('notas').createSignedUrl(path, 300);
-  if(error) return alert('Não deu para abrir a nota: ' + error.message);
-  window.open(data.signedUrl, '_blank');
-}
+/* --- leitura do documento --- */
+let _arquivoPendente = null, _lidoPorIA = false;
+function statusLeitura(t){ const e=document.getElementById('mv-leitura'); if(e) e.innerHTML=t; }
 
-/* ---------- leitura da nota ----------
-   1) PDF com camada de texto: lê local, sem custo.
-   2) Foto ou PDF escaneado: manda para a função ler-nota.
-   Na v3 a nota NÃO define mais a empresa — as notas do cliente são de
-   consumo e o CNPJ delas não bate com PJ nenhuma. O que a leitura traz é
-   fornecedor, valor, data e número.
------------------------------------------------------- */
-async function lerNota(){
-  const f = el('arq').files[0]; if(!f) return;
-  ARQUIVO_NOTA = f;
-  const saida = el('leitura');
-  saida.innerHTML = '<div class="achados">Lendo a nota…</div>';
+async function lerDocumento(){
+  const inp = document.getElementById('mv-arq');
+  const f = inp && inp.files && inp.files[0];
+  if(!f) return;
+  _arquivoPendente = f; _lidoPorIA = false;
+  statusLeitura('Lendo o documento…');
   try{
     let dados = null;
-    if(f.type === 'application/pdf'){
-      const texto = await textoDoPdf(f);
-      if(texto && texto.length > 120) dados = extrairDoTexto(texto);
+    if(f.type === 'application/pdf' || /\.pdf$/i.test(f.name)){
+      const texto = await textoDoPDF(f);
+      if(texto && texto.replace(/\s/g,'').length > 40){ dados = extrairDoTexto(texto); statusLeitura('Lido do PDF (sem custo de IA).'); }
     }
-    if(!dados) dados = await lerPorIA(f);
-    if(!dados || dados.erro) throw new Error('sem dados');
-    if(dados.error) throw new Error(dados.error);
-    aplicarLeitura(dados, saida);
-  }catch(e){
-    const msg = (e && e.message && e.message !== 'sem dados')
-      ? e.message
-      : 'Não deu para ler esta nota. Preencha os campos à mão — o anexo continua salvo junto com o movimento.';
-    saida.innerHTML = `<div class="falha">${esc(msg)}</div>`;
-  }
+    if(!dados){
+      statusLeitura('Sem texto no arquivo — mandando para a leitura por IA…');
+      dados = await lerPorIA(f); _lidoPorIA = true;
+      statusLeitura(dados ? 'Lido por IA.' : 'A IA não conseguiu ler. Preencha à mão.');
+    }
+    if(dados) aplicarLeitura(dados);
+  }catch(e){ statusLeitura('Não deu para ler: '+e.message+'. Preencha à mão — o arquivo continua anexado.'); }
 }
 
-async function textoDoPdf(file){
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+async function textoDoPDF(file){
+  if(!window.pdfjsLib) return '';
   const buf = await file.arrayBuffer();
-  const doc = await pdfjsLib.getDocument({data: buf}).promise;
+  const pdf = await pdfjsLib.getDocument({ data:buf }).promise;
   let txt = '';
-  for(let i=1; i<=Math.min(doc.numPages,3); i++){
-    const p = await doc.getPage(i);
-    const c = await p.getTextContent();
-    txt += c.items.map(t=>t.str).join(' ') + '\n';
+  const n = Math.min(pdf.numPages, 3);
+  for(let i=1;i<=n;i++){
+    const pg = await pdf.getPage(i);
+    const c = await pg.getTextContent();
+    txt += c.items.map(x=>x.str).join(' ') + '\n';
   }
   return txt;
 }
-
 function extrairDoTexto(t){
+  const d = {};
+  const mc = t.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/g);
+  if(mc){ const bom = mc.find(x=>validaCNPJ(x)); if(bom) d.cnpj = soDig(bom); }
+  const mv = t.match(/(?:VALOR\s*(?:TOTAL|A\s*PAGAR|DO\s*DOCUMENTO)?|TOTAL\s*(?:GERAL|A\s*PAGAR)?)\D{0,18}(\d{1,3}(?:\.\d{3})*,\d{2})/i);
+  if(mv) d.valor = Number(mv[1].replace(/\./g,'').replace(',','.'));
+  else { const todos = t.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);
+         if(todos) d.valor = Math.max.apply(null, todos.map(v=>Number(v.replace(/\./g,'').replace(',','.')))); }
+  const md = t.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(md) d.data = md[3]+'-'+md[2]+'-'+md[1];
+  const linhas = t.split(/\s{2,}|\n/).map(s=>s.trim()).filter(s=>s.length>6);
+  const ln = linhas.find(s=>/LTDA|ME$|EIRELI|S\/A|S\.A|COMERCIO|SERVICOS|SUPERMERC|POSTO|DISTRIBUID/i.test(s));
+  if(ln) d.fornecedor = ln.slice(0,80);
+  return (d.cnpj||d.valor) ? d : null;
+}
+async function lerPorIA(file){
+  const b64 = await new Promise((ok,err)=>{ const r=new FileReader();
+    r.onload=()=>ok(String(r.result).split(',')[1]); r.onerror=()=>err(new Error('leitura falhou')); r.readAsDataURL(file); });
+  const { data, error } = await sb.functions.invoke('ler-nota', {
+    body:{ imagemBase64:b64, mimeType:file.type||'image/jpeg', tipo:'nota', nome:file.name }
+  });
+  if(error) throw new Error(error.message);
+  return normalizarLeitura(data);
+}
+/* aceita qualquer formato de resposta da Edge Function: procura as chaves no JSON */
+function normalizarLeitura(obj){
+  if(!obj) return null;
+  if(typeof obj === 'string'){ try{ obj = JSON.parse(obj); }catch(e){ return null; } }
   const achado = {};
-  const forn = t.match(/RAZ[ÃA]O\s+SOCIAL[^\wÀ-ú]{0,6}([A-ZÀ-Ú0-9 .,&\-]{6,60})/i);
-  if(forn) achado.fornecedor = forn[1].trim();
-  const nf = t.match(/(?:N[ºo°.]?\s*|NUMERO\s*|N[ÚU]MERO\s*)(\d{3}\.?\d{3}\.?\d{3}|\d{4,9})/i);
-  if(nf) achado.nf_numero = soNum(nf[1]).replace(/^0+/,'');
-  const tot = t.match(/VALOR\s+TOTAL\s+DA\s+NOTA[^\d]{0,40}([\d.]+,\d{2})/i)
-           || t.match(/VALOR\s+TOTAL[^\d]{0,40}([\d.]+,\d{2})/i);
-  if(tot) achado.valor = tot[1];
-  const venc = t.match(/VENCIMENTO[^\d]{0,30}(\d{2}\/\d{2}\/\d{4})/i);
-  if(venc){ const [d,m,a] = venc[1].split('/'); achado.vencimento = `${a}-${m}-${d}`; }
-  const emi = t.match(/EMISS[ÃA]O[^\d]{0,30}(\d{2}\/\d{2}\/\d{4})/i);
-  if(!achado.vencimento && emi){ const [d,m,a] = emi[1].split('/'); achado.vencimento = `${a}-${m}-${d}`; }
+  (function cavar(o,nivel){
+    if(!o || typeof o!=='object' || nivel>4) return;
+    Object.keys(o).forEach(k=>{
+      const v = o[k], kn = norm(k);
+      if(v && typeof v==='object') return cavar(v,nivel+1);
+      if(v==null || v==='') return;
+      if(!achado.cnpj && /CNPJ/.test(kn) && soDig(v).length>=14) achado.cnpj = soDig(v).slice(0,14);
+      else if(!achado.valor && /(VALOR|TOTAL)/.test(kn)){
+        const n = typeof v==='number'? v : Number(String(v).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'));
+        if(n>0) achado.valor = n;
+      }
+      else if(!achado.data && /(DATA|EMISSAO|VENCIMENTO)/.test(kn)){
+        const s = String(v); const br = s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        achado.data = br ? br[3]+'-'+br[2]+'-'+br[1] : (/^\d{4}-\d{2}-\d{2}/.test(s)? s.slice(0,10) : null);
+      }
+      else if(!achado.fornecedor && /(FORNECEDOR|EMITENTE|RAZAO|NOME|LOJA|ESTABELEC)/.test(kn)) achado.fornecedor = String(v).slice(0,80);
+      else if(!achado.descricao && /(DESCRICAO|ITENS|HISTORICO)/.test(kn)) achado.descricao = String(v).slice(0,120);
+    });
+  })(obj,0);
   return Object.keys(achado).length ? achado : null;
 }
-
-async function lerPorIA(file){
-  const b64 = await new Promise((ok,no) => {
-    const r = new FileReader();
-    r.onload = () => ok(String(r.result).split(',')[1]);
-    r.onerror = no; r.readAsDataURL(file);
-  });
-  const { data, error } = await APP.sb.functions.invoke('ler-nota', {
-    body: { arquivoBase64: b64, mimeType: file.type, cnpjs: APP.empresas.map(e=>({id:e.id, cnpj: soNum(e.cnpj)})) }
-  });
-  if(error) throw error;
-  return data;
-}
-
-function aplicarLeitura(d, saida){
-  const feito = [];
-  if(d.fornecedor){ el('lforn').value = d.fornecedor; feito.push('fornecedor'); }
-  if(d.valor){ el('lval').value = typeof d.valor==='number' ? brl(d.valor) : d.valor; feito.push('valor'); }
-  if(d.vencimento){ el('ldata').value = d.vencimento; feito.push('data'); }
-  if(d.nf_numero && el('lnf')){ el('lnf').value = d.nf_numero; feito.push('nº da nota'); }
-
-  /* v3: se a nota bateu com uma das PJs, aproveita — mas isso é exceção. */
-  let porCnpj = '';
-  if(d.empresa_id && el('lemp')){
-    el('lemp').value = d.empresa_id;
-    const e = empresaPor(d.empresa_id);
-    porCnpj = `<div class="sugerido">O CNPJ da nota é o da ${esc(e?.apelido||e?.nome||'')} — empresa já preenchida.</div>`;
+function aplicarLeitura(d){
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e && v!=null && v!=='') e.value=v; };
+  if(d.valor) set('mv-valor', Number(d.valor).toFixed(2));
+  if(d.data)  set('mv-data', d.data);
+  if(d.cnpj)  set('mv-cnpj', mascaraCNPJ(d.cnpj));
+  if(d.fornecedor) set('mv-forn', d.fornecedor);
+  if(d.descricao)  set('mv-desc', d.descricao);
+  // se o CNPJ do documento for de uma das empresas, já aponta
+  if(d.cnpj){
+    const e = S.empresas.find(x=>soDig(x.cnpj)===soDig(d.cnpj));
+    if(e){ const sel=document.getElementById('mv-empresa'); if(sel) sel.value=e.id;
+           statusLeitura('Lido · CNPJ é da empresa '+esc(e.apelido||e.razao_social)+'.'); return; }
+    const r = S.regras.find(x=>x.tipo_chave==='cnpj' && soDig(x.chave)===soDig(d.cnpj));
+    if(r){ const sel=document.getElementById('mv-empresa'); if(sel) sel.value=r.empresa_id;
+           statusLeitura('Lido · empresa preenchida por regra gravada.'); }
   }
-
-  saida.innerHTML = feito.length
-    ? `<div class="achados">Preenchido: ${esc(feito.join(', '))}. Confira antes de salvar${d.vencimento?' — principalmente a data':''}.</div>${porCnpj}`
-    : `<div class="falha">A nota foi lida mas nenhum campo foi reconhecido. Preencha à mão.</div>`;
-
-  if(!porCnpj) palpiteEmpresa();
+}
+async function subirAnexo(file){
+  try{
+    const buf = await file.arrayBuffer();                 // materializa (bug do File do Android)
+    const blob = new Blob([buf], { type:file.type||'application/octet-stream' });
+    const nome = file.name.replace(/[^\w.\-]/g,'_');
+    const path = (S.mes)+'/'+Date.now()+'-'+nome;
+    const { error } = await sb.storage.from('notas').upload(path, blob, { contentType:blob.type, upsert:false });
+    if(error){ aviso('O anexo não subiu: '+error.message,'erro'); return null; }
+    return { path, nome };
+  }catch(e){ aviso('O anexo não subiu: '+e.message,'erro'); return null; }
+}
+async function verAnexo(path){
+  const { data, error } = await sb.storage.from('notas').createSignedUrl(path, 600);
+  if(error||!data) return aviso('Não abriu o anexo: '+(error?error.message:''),'erro');
+  window.open(data.signedUrl,'_blank');
 }
 
-/* ---------- empresas ---------- */
-function abrirEmpresas(){
-  const linhas = APP.empresas.map(e => `<tr>
-      <td><span class="pt" style="background:${corDe(e)}"></span><b>${esc(e.apelido||e.nome)}</b>
-        <div style="color:var(--ink-3);font-size:12.5px;margin-left:18px" class="num">${esc(fmtCnpj(e.cnpj))}</div></td>
-      <td>${podeEditar()?`<button class="btn-txt" onclick="removerEmpresa('${e.id}')">Remover</button>`:''}</td>
-    </tr>`).join('');
-  modal(`
-    <h2>Empresas</h2>
-    <p class="dica">Toda entrada aponta para um destes CNPJs. Nas saídas é opcional.</p>
-    <table class="emp">${linhas || '<tr><td style="color:var(--ink-3)">Nenhuma empresa ainda.</td></tr>'}</table>
-    ${podeEditar()?`
-    <div class="dupla">
-      <div class="campo"><label for="en">Nome</label><input id="en" placeholder="Razão social"></div>
-      <div class="campo"><label for="ea">Como chamar</label><input id="ea" placeholder="Apelido curto"></div>
-    </div>
-    <div class="campo"><label for="ec">CNPJ</label><input id="ec" inputmode="numeric" placeholder="00.000.000/0000-00"></div>
-    <div class="erro" id="eerr"></div>
-    <button class="btn" onclick="salvarEmpresa()">Adicionar empresa</button>`:''}
-    <div class="rodape"><button class="btn btn-forte" onclick="fecharModal()">Fechar</button></div>`);
+/* --- empresa --- */
+function abrirEmpresa(id){
+  const e = id ? S.empresas.find(x=>x.id===id) : null;
+  abrirModal('<h2>'+(e?'Editar empresa':'Nova empresa')+'</h2>'+
+    '<input type="hidden" id="em-id" value="'+(e?e.id:'')+'">'+
+    '<label>CNPJ</label><input id="em-cnpj" value="'+esc(e?mascaraCNPJ(e.cnpj):'')+'" oninput="this.value=mascaraCNPJ(this.value)">'+
+    '<label>Razão social</label><input id="em-razao" value="'+esc(e?e.razao_social:'')+'">'+
+    '<label>Apelido (como aparece na caixa)</label><input id="em-apelido" value="'+esc(e?e.apelido:'')+'">'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+      '<button class="bt" onclick="salvarEmpresa()">Salvar</button>'+
+      '<button class="bt g" onclick="fecharModal()">Cancelar</button></div>');
 }
 async function salvarEmpresa(){
-  const nome = el('en').value.trim(), apelido = el('ea').value.trim(), cnpj = soNum(el('ec').value);
-  if(!nome) return el('eerr').textContent = 'Falta o nome da empresa.';
-  if(!cnpjValido(cnpj)) return el('eerr').textContent = 'Esse CNPJ não passa na verificação dos dígitos. Confira antes de salvar.';
-  if(APP.empresas.some(e => soNum(e.cnpj)===cnpj)) return el('eerr').textContent = 'Esse CNPJ já está cadastrado.';
-  const cor = CORES[APP.empresas.length % CORES.length];
-  const { error } = await APP.sb.from('empresas').insert({nome, apelido: apelido||nome, cnpj, cor});
-  if(error) return el('eerr').textContent = error.message;
-  fecharModal(); await carregarTudo(); abrirEmpresas();
-}
-async function removerEmpresa(id){
-  const usadas = APP.movimentos.filter(m => m.empresa_id===id).length;
-  if(usadas) return alert(`Esta empresa tem ${usadas} movimento(s). Mude esses movimentos de empresa antes de remover.`);
-  if(!confirm('Remover esta empresa?')) return;
-  await APP.sb.from('empresas').delete().eq('id', id);
-  fecharModal(); await carregarTudo(); abrirEmpresas();
+  const id = val('em-id'), cnpj = soDig(val('em-cnpj')), razao = val('em-razao').trim();
+  if(!validaCNPJ(cnpj)) return aviso('CNPJ inválido — confira os dígitos.','erro');
+  if(!razao) return aviso('Informe a razão social.','erro');
+  const reg = { cnpj, razao_social:razao, apelido: val('em-apelido').trim()||null, ativo:true };
+  let res;
+  if(id) res = await sb.from('empresas').update(reg).eq('id',id).select().maybeSingle();
+  else   res = await sb.from('empresas').insert(reg).select().maybeSingle();
+  if(res.error) return aviso('Não gravou: '+res.error.message,'erro');
+  if(id){ const i=S.empresas.findIndex(x=>x.id===id); if(i>=0) S.empresas[i]=res.data; }
+  else S.empresas.push(res.data);
+  S.modal=null; aviso('Empresa salva.','ok');
 }
 
-/* ---------- modal ---------- */
-function modal(html){
-  fecharModal();
-  const d = document.createElement('div');
-  d.className = 'tela'; d.id = 'tela';
-  d.innerHTML = `<div class="folha">${html}</div>`;
-  d.addEventListener('click', ev => { if(ev.target === d) fecharModal(); });
-  document.body.appendChild(d);
+/* --- origem --- */
+function abrirOrigem(id){
+  const o = id ? S.origens.find(x=>x.id===id) : null;
+  abrirModal('<h2>'+(o?'Editar origem':'Nova origem')+'</h2>'+
+    '<input type="hidden" id="or-id" value="'+(o?o.id:'')+'">'+
+    '<label>Nome</label><input id="or-nome" value="'+esc(o?o.nome:'')+'" placeholder="Ex.: Nubank Vinicius">'+
+    '<div class="lin">'+
+      '<div><label>Tipo</label><select id="or-tipo">'+
+        ['cartao','conta','pix','dinheiro','outro'].map(t=>'<option'+(o&&o.tipo===t?' selected':'')+'>'+t+'</option>').join('')+
+      '</select></div>'+
+      '<div><label>Final / conta</label><input id="or-ident" value="'+esc(o?o.identificador:'')+'"></div>'+
+    '</div>'+
+    '<label>Titular</label><input id="or-titular" value="'+esc(o?o.titular:'')+'" placeholder="pode ser de familiar">'+
+    '<label>Empresa padrão (opcional)</label><select id="or-empresa"><option value="">—</option>'+
+      S.empresas.map(e=>'<option value="'+e.id+'"'+(o&&o.empresa_id===e.id?' selected':'')+'>'+esc(e.apelido||e.razao_social)+'</option>').join('')+
+    '</select>'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+      '<button class="bt" onclick="salvarOrigem()">Salvar</button>'+
+      '<button class="bt g" onclick="fecharModal()">Cancelar</button></div>');
 }
-function fecharModal(){ const t = el('tela'); if(t) t.remove(); }
+async function salvarOrigem(){
+  const id = val('or-id'), nome = val('or-nome').trim();
+  if(!nome) return aviso('Informe o nome da origem.','erro');
+  const reg = { nome, tipo: val('or-tipo'), identificador: val('or-ident').trim()||null,
+                titular: val('or-titular').trim()||null, empresa_id: val('or-empresa')||null };
+  let res;
+  if(id) res = await sb.from('origens').update(reg).eq('id',id).select().maybeSingle();
+  else   res = await sb.from('origens').insert(reg).select().maybeSingle();
+  if(res.error) return aviso('Não gravou: '+res.error.message,'erro');
+  if(id){ const i=S.origens.findIndex(x=>x.id===id); if(i>=0) S.origens[i]=res.data; }
+  else S.origens.push(res.data);
+  S.modal=null; aviso('Origem salva.','ok');
+}
 
-/* ---------- instalar na tela inicial ----------
-   Igual ao sistema da RF: o service worker existe só para o app poder ser
-   instalado. Ele não guarda nada em cache — todo aparelho sempre pega a
-   versão mais nova na rede. */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function(){
-    navigator.serviceWorker.register('service-worker.js').catch(function(){});
+/* --- usuários --- */
+function abrirUsuario(){
+  const papeis = papel()==='mestre' ? ['dono','operador','leitura','mestre'] : ['operador','leitura'];
+  abrirModal('<h2>Novo usuário</h2>'+
+    '<label>Nome</label><input id="us-nome">'+
+    '<label>E-mail</label><input id="us-email" type="email">'+
+    '<label>Senha provisória</label><input id="us-senha" value="'+senhaSugerida()+'">'+
+    '<label>Papel</label><select id="us-papel">'+papeis.map(p=>'<option value="'+p+'">'+p+'</option>').join('')+'</select>'+
+    '<label>Empresas que ele enxerga (nenhuma marcada = todas, para o dono)</label>'+
+    '<div style="max-height:170px;overflow:auto;border:1px solid var(--linha);border-radius:8px;padding:8px">'+
+      S.empresas.map(e=>'<label style="text-transform:none;letter-spacing:0;color:var(--texto);display:flex;gap:7px;align-items:center;margin:4px 0">'+
+        '<input type="checkbox" class="us-emp" value="'+e.id+'" style="width:auto"> '+esc(e.apelido||e.razao_social)+'</label>').join('')+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+      '<button class="bt" onclick="salvarUsuario()">Criar</button>'+
+      '<button class="bt g" onclick="fecharModal()">Cancelar</button></div>');
+}
+function senhaSugerida(){ return 'cpe' + Math.random().toString(36).slice(2,8); }
+async function salvarUsuario(){
+  const email = val('us-email').trim().toLowerCase();
+  const senha = val('us-senha');
+  if(!email.includes('@')) return aviso('E-mail inválido.','erro');
+  if(senha.length<6) return aviso('A senha precisa de ao menos 6 caracteres.','erro');
+  const empresas = Array.from(document.querySelectorAll('.us-emp')).filter(c=>c.checked).map(c=>c.value);
+  const { data, error } = await sb.functions.invoke('criar-usuario', {
+    body:{ acao:'criar', nome:val('us-nome').trim(), email, senha, papel:val('us-papel'), empresas }
   });
+  if(error) return aviso('Não criou: '+error.message,'erro');
+  if(data && data.erro) return aviso('Não criou: '+data.erro,'erro');
+  const { data:ps } = await sb.from('perfis').select('*').order('papel');
+  S.perfis = ps||S.perfis;
+  S.modal=null;
+  aviso('Usuário criado. Senha: '+senha,'ok');
 }
+async function acaoUsuario(acao, id, extra){
+  let body = { acao, id };
+  if(acao==='senha'){
+    const nova = prompt('Nova senha (mínimo 6 caracteres):', senhaSugerida());
+    if(!nova) return; body.senha = nova;
+  }
+  if(acao==='ativar') body.ativo = extra;
+  if(acao==='excluir' && !confirm('Excluir este usuário definitivamente?')) return;
+  const { data, error } = await sb.functions.invoke('criar-usuario', { body });
+  if(error) return aviso('Falhou: '+error.message,'erro');
+  if(data && data.erro) return aviso('Falhou: '+data.erro,'erro');
+  const { data:ps } = await sb.from('perfis').select('*').order('papel');
+  S.perfis = ps||S.perfis;
+  aviso(acao==='senha'?'Senha trocada: '+body.senha : 'Feito.','ok');
+}
+
+/* expõe o que o HTML chama */
+Object.assign(window, {
+  entrar, sair, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
+  alternarPago, excluirMov, lerDocumento, verAnexo, fecharModal,
+  abrirEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem,
+  abrirUsuario, salvarUsuario, acaoUsuario, apontar, mascaraCNPJ, S, render
+});
+
+iniciar();
 </script>
 </body>
 </html>
