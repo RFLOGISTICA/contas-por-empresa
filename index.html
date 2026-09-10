@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v9</title>
+<title>CPE — Contas por Empresa v10</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v9">
+<meta name="rf-versao" content="v10">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v9',
+  versao : 'v10',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -856,17 +856,34 @@ function abrirUsuario(){
       '<button class="bt g" onclick="fecharModal()">Cancelar</button></div>');
 }
 function senhaSugerida(){ return 'cpe' + Math.random().toString(36).slice(2,8); }
+async function chamarCriarUsuario(body){
+  try{
+    const { data, error } = await sb.functions.invoke('criar-usuario', { body });
+    if(error){
+      let msg = error.message || String(error);
+      // o supabase-js esconde o corpo da resposta quando o status não é 2xx
+      try{
+        const j = await error.context.json();
+        if(j && j.erro) msg = j.erro;
+      }catch(e){
+        try{ const t = await error.context.text(); if(t) msg = t.slice(0,300); }catch(e2){}
+      }
+      if(/non-2xx/i.test(msg)) msg += ' (veja Edge Functions > criar-usuario > Logs)';
+      return { erro: msg };
+    }
+    if(data && data.erro) return { erro: data.erro };
+    return data || {};
+  }catch(e){ return { erro: 'Falha de rede ao chamar a função: '+(e.message||e) }; }
+}
+
 async function salvarUsuario(){
   const email = val('us-email').trim().toLowerCase();
   const senha = val('us-senha');
   if(!email.includes('@')) return aviso('E-mail inválido.','erro');
   if(senha.length<6) return aviso('A senha precisa de ao menos 6 caracteres.','erro');
   const empresas = Array.from(document.querySelectorAll('.us-emp')).filter(c=>c.checked).map(c=>c.value);
-  const { data, error } = await sb.functions.invoke('criar-usuario', {
-    body:{ acao:'criar', nome:val('us-nome').trim(), email, senha, papel:val('us-papel'), empresas }
-  });
-  if(error) return aviso('Não criou: '+error.message,'erro');
-  if(data && data.erro) return aviso('Não criou: '+data.erro,'erro');
+  const r = await chamarCriarUsuario({ acao:'criar', nome:val('us-nome').trim(), email, senha, papel:val('us-papel'), empresas });
+  if(r.erro) return aviso('Não criou: '+r.erro,'erro');
   const { data:ps } = await sb.from('perfis').select('*').order('papel');
   S.perfis = ps||S.perfis;
   S.modal=null;
@@ -880,9 +897,8 @@ async function acaoUsuario(acao, id, extra){
   }
   if(acao==='ativar') body.ativo = extra;
   if(acao==='excluir' && !confirm('Excluir este usuário definitivamente?')) return;
-  const { data, error } = await sb.functions.invoke('criar-usuario', { body });
-  if(error) return aviso('Falhou: '+error.message,'erro');
-  if(data && data.erro) return aviso('Falhou: '+data.erro,'erro');
+  const r = await chamarCriarUsuario(body);
+  if(r.erro) return aviso('Falhou: '+r.erro,'erro');
   const { data:ps } = await sb.from('perfis').select('*').order('papel');
   S.perfis = ps||S.perfis;
   aviso(acao==='senha'?'Senha trocada: '+body.senha : 'Feito.','ok');
