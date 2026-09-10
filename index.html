@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v7</title>
+<title>CPE — Contas por Empresa v8</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v7">
+<meta name="rf-versao" content="v8">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -117,7 +117,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v7',
+  versao : 'v8',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -129,7 +129,7 @@ const SISTEMA = {
    -------------------------------------------------------------------------- */
 const CFG = {
   url : 'https://btbxqbozmrbbhjjpajbv.supabase.co',
-  anon: 'COLE_AQUI_A_ANON_KEY'
+  anon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0YnhxYm96bXJiYmhqanBhamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NjA5NDksImV4cCI6MjEwNDUzNjk0OX0.SGX5jvB_xoxbv2nqRaEhbk1QDHsnEIVqTau5xyekVVo'
 };
 
 let sb = null;
@@ -209,11 +209,11 @@ async function iniciar(){
 function salvarChave(){
   const k = (val('cfg-anon')||'').trim();
   const err = document.getElementById('cfg-erro');
-  if(k.length < 40 || k.indexOf('eyJ') !== 0){
-    if(err) err.textContent = 'Isso não parece a chave anon (ela começa com eyJ e é bem longa).';
+  if(k.length < 30 || (k.indexOf('eyJ') !== 0 && k.indexOf('sb_publishable_') !== 0)){
+    if(err) err.textContent = 'Isso não parece a chave pública (ela começa com eyJ ou sb_publishable_).';
     return;
   }
-  if(k.indexOf('service_role') >= 0){
+  if(k.indexOf('service_role') >= 0 || k.indexOf('sb_secret_') === 0){
     if(err) err.textContent = 'Essa é a service_role — nunca use ela aqui. Copie a anon public.';
     return;
   }
