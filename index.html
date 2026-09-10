@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v6</title>
+<title>CPE — Contas por Empresa v7</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v6">
+<meta name="rf-versao" content="v7">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -117,7 +117,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v6',
+  versao : 'v7',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -176,11 +176,25 @@ async function iniciar(){
   console.log('%c'+SISTEMA.codigo+' · '+SISTEMA.nome+' · '+SISTEMA.versao+' · '+SISTEMA.data+' · cliente: '+SISTEMA.cliente,
               'color:#D4A017;font-weight:bold');
 
+  // a chave pode vir do arquivo OU ser colada na tela (fica guardada no aparelho)
+  const guardada = (function(){ try{ return localStorage.getItem('cpe_anon')||''; }catch(e){ return ''; } })();
+  if(guardada && guardada.length>40) CFG.anon = guardada;
+
   if(CFG.anon.indexOf('COLE_AQUI')===0){
     document.getElementById('app').innerHTML =
-      '<div class="wrap"><div class="card" style="margin-top:40px"><h3>Falta a chave</h3>'+
-      '<p>Abra o <b>index.html</b> e cole a chave <b>anon public</b> do projeto na constante <code>CFG.anon</code>.</p>'+
-      '<p style="color:#9a9a9a">Supabase &gt; Project Settings &gt; API &gt; anon public</p></div></div>';
+      '<div class="login"><div style="margin-bottom:14px">'+marcaSVG(64)+'</div>'+
+      '<h2 style="margin:0 0 2px;letter-spacing:.5px">CONTAS POR EMPRESA</h2>'+
+      '<div style="color:#9a9a9a;font-size:12px;letter-spacing:2px;margin-bottom:18px">'+SISTEMA.casa.toUpperCase()+'</div>'+
+      '<div class="card">'+
+        '<h3 style="margin-top:0">Primeira vez neste aparelho</h3>'+
+        '<div class="aviso">Cole a chave <b>anon public</b> do projeto. Ela fica guardada aqui e você não precisa fazer isso de novo.<br>'+
+        'Supabase &gt; Project Settings &gt; API &gt; anon public</div>'+
+        '<label>Chave anon public</label>'+
+        '<textarea id="cfg-anon" rows="4" placeholder="eyJ..." style="font-size:12px"></textarea>'+
+        '<div id="cfg-erro" style="color:#f0b6a8;font-size:12.5px;margin-top:6px"></div>'+
+        '<div style="margin-top:14px"><button class="bt" style="width:100%" onclick="salvarChave()">Salvar e entrar</button></div>'+
+      '</div>'+
+      '<div style="color:#5a5a5a;font-size:11px">'+SISTEMA.codigo+' '+SISTEMA.versao+'</div></div>';
     return;
   }
   sb = window.supabase.createClient(CFG.url, CFG.anon, { auth:{ persistSession:true, autoRefreshToken:true } });
@@ -190,6 +204,21 @@ async function iniciar(){
   const { data } = await sb.auth.getSession();
   if(data && data.session){ S.user = data.session.user; await carregarTudo(); }
   render();
+}
+
+function salvarChave(){
+  const k = (val('cfg-anon')||'').trim();
+  const err = document.getElementById('cfg-erro');
+  if(k.length < 40 || k.indexOf('eyJ') !== 0){
+    if(err) err.textContent = 'Isso não parece a chave anon (ela começa com eyJ e é bem longa).';
+    return;
+  }
+  if(k.indexOf('service_role') >= 0){
+    if(err) err.textContent = 'Essa é a service_role — nunca use ela aqui. Copie a anon public.';
+    return;
+  }
+  try{ localStorage.setItem('cpe_anon', k); }catch(e){}
+  location.reload();
 }
 
 async function entrar(){
@@ -837,7 +866,7 @@ async function acaoUsuario(acao, id, extra){
 
 /* expõe o que o HTML chama */
 Object.assign(window, {
-  entrar, sair, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
+  entrar, sair, salvarChave, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
   alternarPago, excluirMov, lerDocumento, verAnexo, fecharModal,
   abrirEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem,
   abrirUsuario, salvarUsuario, acaoUsuario, apontar, mascaraCNPJ, S, render
