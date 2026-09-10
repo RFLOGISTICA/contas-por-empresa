@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v21</title>
+<title>CPE — Contas por Empresa v22</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v21">
+<meta name="rf-versao" content="v22">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v21',
+  versao : 'v22',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -306,6 +306,7 @@ function render(){
   if(S.carregando && !S.empresas.length) corpo = '<div class="vazio">Carregando…</div>';
   else if(S.tela==='painel')   corpo = telaPainel();
   else if(S.tela==='fila')     corpo = telaFila();
+  else if(S.tela==='nomes')    corpo = telaNomes();
   else if(S.tela==='origens')  corpo = telaOrigens();
   else if(S.tela==='empresas') corpo = telaEmpresas();
   else if(S.tela==='usuarios') corpo = telaUsuarios();
@@ -322,6 +323,7 @@ function render(){
       '<nav class="abas">'+
         aba('painel','Painel')+
         aba('fila','Apontar depois'+(nf?'<span class="bad">'+nf+'</span>':''))+
+        aba('nomes','Nomes')+
         aba('origens','Cartões e contas')+
         aba('empresas','Empresas')+
         (podeUsuarios()? aba('usuarios','Usuários') : '')+
@@ -556,6 +558,98 @@ function telaUsuarios(){
 }
 
 /* ===================== modais ===================== */
+
+/* ---------- NOMES: quem se repete no extrato ---------- */
+function nomesAgrupados(){
+  const mapa = {};
+  S.movimentos.forEach(m=>{
+    const bruto = (m.fornecedor||'').trim();
+    if(!bruto) return;
+    const ch = norm(bruto);
+    if(!ch) return;
+    if(!mapa[ch]) mapa[ch] = { chave:ch, nome:bruto, qtd:0, sai:0, ent:0, semEmpresa:0, ids:[] };
+    const g = mapa[ch];
+    g.qtd++;
+    g.ids.push(m.id);
+    if(m.tipo==='entrada') g.ent += Number(m.valor)||0; else g.sai += Number(m.valor)||0;
+    if(!m.empresa_id) g.semEmpresa++;
+    if(bruto.length > g.nome.length) g.nome = bruto;   // guarda a grafia mais completa
+  });
+  return Object.values(mapa).sort((a,b)=> b.qtd - a.qtd || (b.sai+b.ent) - (a.sai+a.ent));
+}
+function regraDoNome(chave){
+  return S.regras.find(r=> r.tipo_chave==='nome' && norm(r.chave)===chave) || null;
+}
+
+function telaNomes(){
+  const todos = nomesAgrupados();
+  const so = S._nomesSoRepetidos !== false;
+  const lista = so ? todos.filter(g=>g.qtd > 1) : todos;
+
+  let h = '<div class="card"><h3>NOMES QUE SE REPETEM</h3>'+
+    '<div class="aviso">Cada nome que aparece no extrato — entrando ou saindo — vira uma linha aqui, com o total. '+
+    'Aponte o CNPJ uma vez: os lançamentos que ainda estão na fila vão junto, e nos próximos extratos esse nome já cai sozinho na empresa certa.</div>'+
+    '<label style="text-transform:none;letter-spacing:0;color:var(--texto);display:flex;gap:7px;align-items:center">'+
+      '<input type="checkbox" style="width:auto" '+(so?'checked':'')+' onchange="S._nomesSoRepetidos=this.checked;render()"> '+
+      'mostrar só quem aparece mais de uma vez</label>';
+
+  if(!lista.length) return h+'<div class="vazio">Nenhum nome ainda. Importe um extrato para começar.</div></div>';
+
+  h += '<table style="margin-top:12px"><thead><tr><th>Nome</th><th style="text-align:right">Vezes</th>'+
+       '<th style="text-align:right">Saiu</th><th style="text-align:right">Entrou</th>'+
+       '<th>Destino</th><th></th></tr></thead><tbody>'+
+    lista.map(g=>{
+      const r = regraDoNome(g.chave);
+      return '<tr>'+
+        '<td><b>'+esc(g.nome)+'</b>'+
+          (g.semEmpresa? '<div style="color:var(--fraco);font-size:11.5px">'+g.semEmpresa+' na fila</div>':'')+'</td>'+
+        '<td style="text-align:right">'+g.qtd+'</td>'+
+        '<td style="text-align:right;color:'+(g.sai?'var(--vermelho)':'var(--fraco)')+'">'+(g.sai?brl(g.sai):'—')+'</td>'+
+        '<td style="text-align:right;color:'+(g.ent?'var(--verde)':'var(--fraco)')+'">'+(g.ent?brl(g.ent):'—')+'</td>'+
+        '<td><select id="nm-'+g.chave.replace(/[^A-Z0-9]/g,'')+'">'+
+          '<option value="">— sem destino —</option>'+
+          S.empresas.map(e=>'<option value="'+e.id+'"'+(r&&r.empresa_id===e.id?' selected':'')+'>'+esc(e.apelido||e.razao_social)+'</option>').join('')+
+        '</select></td>'+
+        '<td style="white-space:nowrap">'+
+          (podeEditar()? '<button class="bt mini" onclick="definirNome(\''+esc(g.chave)+'\',\''+esc(g.nome).replace(/'/g,"")+'\')">aplicar</button> ' : '')+
+          (r && podeEditar()? '<button class="bt g mini" onclick="limparNome(\''+esc(g.chave)+'\')">✕</button>':'')+
+        '</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  return h;
+}
+
+async function definirNome(chave, nome){
+  const empresa = val('nm-'+chave.replace(/[^A-Z0-9]/g,''));
+  if(!empresa) return aviso('Escolha a empresa de destino.','erro');
+
+  const { error } = await sb.from('regras_fornecedor')
+    .upsert({ chave:nome, tipo_chave:'nome', empresa_id:empresa, criado_por:S.user.id },
+            { onConflict:'tipo_chave,chave' });
+  if(error) return aviso('Não gravou a regra: '+error.message,'erro');
+
+  // leva junto o que ainda está na fila
+  const pendentes = S.movimentos.filter(m=>!m.empresa_id && norm(m.fornecedor||'')===chave);
+  let movidos = 0;
+  if(pendentes.length){
+    const ids = pendentes.map(m=>m.id);
+    const { error:e2 } = await sb.from('movimentos').update({ empresa_id:empresa }).in('id', ids);
+    if(e2) return aviso('Regra salva, mas não movi a fila: '+e2.message,'erro');
+    pendentes.forEach(m=>{ m.empresa_id = empresa; movidos++; });
+  }
+  const { data } = await sb.from('regras_fornecedor').select('*');
+  S.regras = data || S.regras;
+  aviso(esc(nome)+' → '+nomeEmpresa(empresa)+(movidos? ' · '+movidos+' lançamento(s) saíram da fila':'')+'. Os próximos já vêm apontados.','ok');
+}
+
+async function limparNome(chave){
+  const r = regraDoNome(chave);
+  if(!r) return;
+  const { error } = await sb.from('regras_fornecedor').delete().eq('id', r.id);
+  if(error) return aviso('Não removeu: '+error.message,'erro');
+  S.regras = S.regras.filter(x=>x.id!==r.id);
+  aviso('Destino removido. Os lançamentos já apontados continuam como estão.','ok');
+}
+
 function fecharModal(){ S.modal=null; render(); }
 function abrirModal(html){ S.modal = '<div class="modalbg" onclick="if(event.target===this)fecharModal()"><div class="modal">'+html+'</div></div>'; render(); }
 
@@ -1385,7 +1479,7 @@ async function acaoUsuario(acao, id, extra){
 
 /* expõe o que o HTML chama */
 Object.assign(window, {
-  entrar, sair, salvarChave, trocarTema, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
+  entrar, sair, salvarChave, trocarTema, definirNome, limparNome, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
   alternarPago, excluirMov, lerDocumento, verAnexo, fecharModal,
   abrirEmpresa, abrirEmpresaAnexo, lerDocEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem, abrirExtrato, lerExtrato, importarExtrato,
   abrirUsuario, salvarUsuario, acaoUsuario, apontar, mascaraCNPJ, S, render
