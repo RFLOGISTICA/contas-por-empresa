@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CPE — Contas por Empresa v23</title>
+<title>CPE — Contas por Empresa v29</title>
 
 <!-- IDENTIFICAÇÃO DO SISTEMA (padrão RF Sistemas) -->
 <meta name="rf-sistema" content="CPE">
 <meta name="rf-sistema-nome" content="Contas por Empresa">
-<meta name="rf-versao" content="v23">
+<meta name="rf-versao" content="v29">
 <meta name="rf-data" content="2026-09-10">
 <meta name="rf-cliente" content="Vinicius">
 
@@ -134,7 +134,7 @@
 const SISTEMA = {
   codigo : 'CPE',
   nome   : 'Contas por Empresa',
-  versao : 'v23',
+  versao : 'v29',
   data   : '10/09/2026',
   cliente: 'Vinicius',
   casa   : 'RF Sistemas'
@@ -375,7 +375,7 @@ function telaPainel(){
       kpi('Saídas', brl(t.sai))+
       kpi('Saldo', brl(t.saldo))+
       kpi('Saídas pagas', t.pct+'%')+
-      kpi('Sem empresa', soltas+(soltas===1?' saída':' saídas'))+
+      kpi('Sem empresa', soltas+(soltas===1?' lançamento':' lançamentos'))+
     '</div>' : '')+
   '</div>';
 
@@ -384,7 +384,7 @@ function telaPainel(){
       '<input type="month" value="'+S.mes+'" onchange="S.mes=this.value;render()"></div>'+
       (podeEditar()? '<button class="bt" onclick="abrirLancamento(\'saida\')">− Lançar saída</button>'+
                      '<button class="bt g" onclick="abrirLancamento(\'entrada\')">+ Lançar entrada</button>'+
-                     '<button class="bt g" onclick="abrirExtrato()">📎 Anexar extrato</button>' : '')+
+                     '<button class="bt g" onclick="abrirExtrato()">📎 Anexar extrato / fatura</button>' : '')+
     '</div>';
 
   if(!S.empresas.length) return h + '<div class="card"><div class="vazio">Nenhuma empresa cadastrada ainda. Vá em <b>Empresas</b>.</div></div>';
@@ -448,12 +448,46 @@ function tabelaMovimentos(movs){
 /* ---------- FILA: saídas sem empresa ---------- */
 function telaFila(){
   const lista = fila();
-  let h = '<div class="card"><h3>SAÍDAS SEM EMPRESA</h3>'+
-    '<div class="aviso">Toda entrada exige um CNPJ. A saída pode entrar solta e ficar aqui até você apontar de quem foi. '+
-    'Ao apontar, dá para gravar a regra: da próxima vez o mesmo fornecedor já cai na empresa certa.</div>';
-  if(!lista.length) return h+'<div class="vazio">Nada pendente. Fila limpa.</div></div>';
+  const ent = lista.filter(m=>m.tipo==='entrada');
+  const sai = lista.filter(m=>m.tipo==='saida');
+  const tEnt = ent.reduce((s,x)=>s+(Number(x.valor)||0),0);
+  const tSai = sai.reduce((s,x)=>s+(Number(x.valor)||0),0);
 
-  h += lista.map(m=>{
+  const aviso = '<div class="aviso">Cada lançamento fica na sua caixa até alguém apontar de qual CNPJ é. '+
+    'Ao apontar, dá para gravar a regra: da próxima vez esse mesmo nome já cai na empresa certa.</div>';
+
+  if(!lista.length) return '<div class="card"><h3>APONTAR DEPOIS</h3>'+aviso+
+    '<div class="vazio">Nada pendente. As duas caixas estão limpas.</div></div>';
+
+  let h = '<div class="card">'+aviso+'</div>';
+
+  // CAIXA DAS ENTRADAS
+  h += '<div class="card" style="border-color:'+(ent.length?'var(--verde)':'var(--linha)')+'">'+
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px">'+
+      '<h3 style="margin:0;color:var(--verde)">ENTRADAS SEM EMPRESA</h3>'+
+      '<span style="font-size:13px;color:var(--fraco)">'+ent.length+
+        (ent.length===1?' lançamento':' lançamentos')+'</span>'+
+      '<b style="margin-left:auto;font-size:20px;color:var(--verde)">+ '+brl(tEnt)+'</b>'+
+    '</div>'+
+    (ent.length ? filaCartoes(ent) : '<div class="vazio">Nenhuma entrada pendente.</div>')+
+  '</div>';
+
+  // CAIXA DAS SAÍDAS
+  h += '<div class="card" style="border-color:'+(sai.length?'var(--vermelho)':'var(--linha)')+'">'+
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px">'+
+      '<h3 style="margin:0;color:var(--vermelho)">SAÍDAS SEM EMPRESA</h3>'+
+      '<span style="font-size:13px;color:var(--fraco)">'+sai.length+
+        (sai.length===1?' lançamento':' lançamentos')+'</span>'+
+      '<b style="margin-left:auto;font-size:20px;color:var(--vermelho)">− '+brl(tSai)+'</b>'+
+    '</div>'+
+    (sai.length ? filaCartoes(sai) : '<div class="vazio">Nenhuma saída pendente.</div>')+
+  '</div>';
+
+  return h;
+}
+
+function filaCartoes(lista){
+  return lista.map(m=>{
     const sug = sugerirEmpresa(m);
     return '<div style="border:1px solid var(--linha);border-radius:10px;padding:11px;margin-bottom:9px">'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
@@ -479,7 +513,6 @@ function telaFila(){
       (sug? '<div style="color:var(--ouro-claro);font-size:11.5px;margin-top:4px">sugerido por regra já gravada</div>':'')+
     '</div>';
   }).join('');
-  return h+'</div>';
 }
 function sugerirEmpresa(m){
   const cnpj = soDig(m.cnpj_fornecedor);
@@ -667,7 +700,7 @@ function abrirLancamento(tipo, m){
   abrirModal(
     '<h2>'+(m?'Editar ':'')+(ent?'Entrada':'Saída')+'</h2>'+
     '<div style="color:var(--fraco);font-size:12px;margin-bottom:8px">'+
-      (ent? 'Entrada exige a empresa.' : 'A saída pode ficar sem empresa e ir para a fila.')+'</div>'+
+      'Pode ficar sem empresa e ir para a fila "Apontar depois".'+'</div>'+
     '<input type="hidden" id="mv-tipo" value="'+t+'">'+
     (podeEditar()? '<div class="card" style="background:var(--fundo2);margin-bottom:12px">'+
       '<label>Anexar nota (PDF ou foto) — o sistema tenta ler sozinho</label>'+
@@ -677,7 +710,7 @@ function abrirLancamento(tipo, m){
       '<div><label>Data</label><input type="date" id="mv-data" value="'+(m? (m.data_movimento||'').slice(0,10) : hojeISO())+'"></div>'+
       '<div><label>Valor (R$)</label><input type="number" step="0.01" id="mv-valor" value="'+(m? m.valor : '')+'"></div>'+
     '</div>'+
-    '<label>Empresa'+(ent?' (obrigatória)':' (pode deixar em branco)')+'</label>'+
+    '<label>Empresa (pode deixar em branco)</label>'+
     '<select id="mv-empresa"><option value="">— apontar depois —</option>'+
       S.empresas.map(e=>'<option value="'+e.id+'"'+(m&&m.empresa_id===e.id?' selected':'')+'>'+esc(e.apelido||e.razao_social)+'</option>').join('')+
     '</select>'+
@@ -708,7 +741,6 @@ async function salvarMovimento(){
   const empresa = val('mv-empresa') || null;
   const valor = Number(val('mv-valor'));
   if(!valor || valor<=0) return aviso('Informe o valor.','erro');
-  if(tipo==='entrada' && !empresa) return aviso('Entrada exige a empresa — é a regra do sistema.','erro');
   const cnpj = soDig(val('mv-cnpj'));
   if(cnpj && cnpj.length===14 && !validaCNPJ(cnpj)) return aviso('CNPJ do documento inválido.','erro');
 
@@ -724,8 +756,8 @@ async function salvarMovimento(){
   if(_arquivoPendente){ const up = await subirAnexo(_arquivoPendente);
     if(up){ reg.anexo_path = up.path; reg.anexo_nome = up.nome; reg.lido_por_ia = _lidoPorIA; } }
 
-  // se a saída ficou solta mas há regra para o fornecedor, aponta sozinho
-  if(tipo==='saida' && !empresa){
+  // sem empresa, mas com regra gravada para o nome: aponta sozinho
+  if(!empresa){
     const sug = sugerirEmpresa(reg);
     if(sug){ reg.empresa_id = sug; }
   }
@@ -793,6 +825,15 @@ async function lerDocumento(){
   }catch(e){ statusLeitura('Não deu para ler: '+e.message+'. Preencha à mão — o arquivo continua anexado.'); }
 }
 
+/* alguns PDFs (faturas de cartão) escrevem com espaço entre cada letra:
+   "M A R C U S" precisa virar "MARCUS" antes de qualquer leitura */
+function desespacar(t){
+  const toks = String(t||'').trim().split(/\s+/);
+  if(toks.length < 3) return t;
+  const soltos = toks.filter(x=>x.length===1).length;
+  return (soltos / toks.length) > 0.6 ? toks.join('') : t;
+}
+
 async function itensDoPDF(file, maxPag){
   if(!window.pdfjsLib) return [];
   const buf = await file.arrayBuffer();
@@ -805,7 +846,7 @@ async function itensDoPDF(file, maxPag){
     c.items.forEach(it=>{
       const str = String(it.str||'').trim();
       if(!str) return;
-      itens.push({ pag:i, x:it.transform[4], y:it.transform[5], str,
+      itens.push({ pag:i, x:it.transform[4], y:it.transform[5], str: desespacar(str),
                    ordem: i*100000 - it.transform[5] });   // posição vertical contínua
     });
   }
@@ -848,12 +889,13 @@ function extratoDosItens(itens){
     r.moedas.sort((a,b)=>a.x-b.x);
     if(!r.moedas.length) return;
     const val = r.moedas[0];
+    const sld = r.moedas.length > 1 ? (r.moedas[1].neg ? -r.moedas[1].v : r.moedas[1].v) : null;
     r.desc.sort((a,b)=> a.ordem-b.ordem || a.x-b.x);
     const desc = extratoLimpa(r.desc.map(d=>d.s).join(' '));
     if(!val.v || !extratoValido(desc)) return;
     out.push({ data:r.data, descricao:desc.slice(0,140),
                contraparte:((desc.match(/\/\s*([^)]{3,80})\)/)||[])[1]||'').trim(),
-               valor:val.v, tipo: val.neg ? 'saida' : 'entrada' });
+               valor:val.v, tipo: val.neg ? 'saida' : 'entrada', saldo: sld });
   });
   return out;
 }
@@ -1144,8 +1186,8 @@ let _extrato = null;
 
 function abrirExtrato(){
   _extrato = null;
-  abrirModal('<h2>Importar extrato</h2>'+
-    '<div class="aviso">Anexe o PDF do extrato do banco. O sistema lê os lançamentos direto do arquivo, '+
+  abrirModal('<h2>Importar extrato ou fatura</h2>'+
+    '<div class="aviso">Anexe o PDF do extrato do banco ou da fatura do cartão. O sistema lê os lançamentos direto do arquivo, '+
     'sem custo de IA. As saídas entram sem empresa e ficam na fila "Apontar depois".</div>'+
     '<input type="file" id="ex-arq" accept="application/pdf" onchange="lerExtrato()">'+
     '<div id="ex-status" style="font-size:12.5px;color:var(--fraco);margin-top:10px"></div>'+
@@ -1158,9 +1200,70 @@ function statusExtrato(t){ const e=document.getElementById('ex-status'); if(e) e
 function extratoSaldos(t){
   const plano = String(t||'').replace(/\s+/g,' ');
   const ini = plano.match(/Saldo em\s+\d{2}\/\d{2}\/\d{4}:?\s*(-\s*)?R\$\s*([\d.]+,\d{2})/i);
-  const fim = plano.match(/Saldo (?:atual|no final do per[ií]odo)\s*:?\s*(-\s*)?R\$\s*([\d.]+,\d{2})/i);
+  // o "Saldo atual" do cabeçalho é o de HOJE; num extrato de período passado
+  // o que vale é o "Saldo no final do período"
+  const fimPeriodo = plano.match(/Saldo no final do per[ií]odo\s*:?\s*(-\s*)?R\$\s*([\d.]+,\d{2})/i);
+  const fimAtual   = plano.match(/Saldo atual\s*:?\s*(-\s*)?R\$\s*([\d.]+,\d{2})/i);
   const n = m => m ? (m[1]?-1:1) * Number(m[2].replace(/\./g,'').replace(',','.')) : null;
-  return { inicial: n(ini), final: n(fim) };
+  return { inicial: n(ini), final: n(fimPeriodo || fimAtual), temFimPeriodo: !!fimPeriodo };
+}
+
+const MESES_ABR = { jan:1, fev:2, mar:3, abr:4, mai:5, jun:6, jul:7, ago:8, set:9, out:10, nov:11, dez:12 };
+
+function ehFatura(txt){
+  const t = String(txt||'');
+  return /FATURA/i.test(t) && (/PAGAMENTOM[ÍI]NIMO|PAGAMENTO M[ÍI]NIMO|RESUMODAFATURA|LAN[ÇC]AMENTOS\s*[–-]/i.test(t));
+}
+
+function faturaDosItens(itens, txt){
+  const plano = String(txt||'').replace(/\s+/g,' ');
+  const meta = {};
+  const mRef = plano.match(/REF\.?:?\s*(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\/(\d{4})/i);
+  if(mRef){ meta.refMes = MESES_ABR[mRef[1].toLowerCase()]; meta.refAno = Number(mRef[2]); }
+  const mVenc = plano.match(/VENCIMENTO:?\s*(\d{1,2})\s*(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)\s*(\d{4})/i);
+  if(mVenc){ meta.vencimento = mVenc[3]+'-'+String(MESES_ABR[mVenc[2].toLowerCase()]).padStart(2,'0')+'-'+mVenc[1].padStart(2,'0'); }
+  const mTot = plano.match(/VALOR\s*TOTAL\s*DE\s*R\$\s*([\d.]+,\d{2})/i) || plano.match(/TOTAL:?\s*R\$\s*([\d.]+,\d{2})/i);
+  if(mTot) meta.total = extratoValor(mTot[1]);
+  const mDesp = plano.match(/DESPESAS\/?D[ÉE]BITOS\s*\+?\s*R\$\s*([\d.]+,\d{2})/i);
+  if(mDesp) meta.despesas = extratoValor(mDesp[1]);
+  const mCart = plano.match(/LAN[ÇC]AMENTOS[^A-Za-z0-9]{0,6}([A-Za-z ]{3,30})(\d{4})\*+[.\*]*(\d{4})/i);
+  if(mCart){
+    meta.bandeira = mCart[1].replace(/([a-z])([A-Z])/g,'$1 $2').replace(/\s+/g,' ').trim();
+    meta.final = mCart[3];
+  }
+
+  // linhas: junta os pedaços por altura
+  const linhas = [];
+  const grupos = [];
+  itens.forEach(it=>{
+    let g = grupos.find(gg=> gg.pag===it.pag && Math.abs(gg.y - it.y) <= 3);
+    if(!g){ g = { pag:it.pag, y:it.y, partes:[] }; grupos.push(g); }
+    g.partes.push(it);
+  });
+  grupos.sort((a,b)=> a.pag-b.pag || b.y-a.y);
+  grupos.forEach(g=>{
+    g.partes.sort((a,b)=>a.x-b.x);
+    linhas.push(g.partes.map(x=>x.str).join(' ').replace(/R\s*\$/g,'R$').replace(/\s+/g,' ').trim());
+  });
+
+  const out = [];
+  const re = /^(\d{1,2})\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\s+(.+?)\s*R\$\s*([\d.]+,\d{2})$/i;
+  linhas.forEach(l=>{
+    if(/^TOTAL/i.test(l)) return;
+    const m = l.match(re);
+    if(!m) return;
+    const mes = MESES_ABR[m[2].toLowerCase()];
+    let ano = meta.refAno || new Date().getFullYear();
+    if(meta.refMes && mes > meta.refMes) ano--;          // compra do ano anterior
+    const desc = m[3].replace(/\s+/g,' ').trim();
+    const valor = extratoValor(m[4]);
+    if(!valor || desc.length < 2) return;
+    out.push({ data: ano+'-'+String(mes).padStart(2,'0')+'-'+m[1].padStart(2,'0'),
+               descricao: desc.slice(0,140),
+               contraparte: desc.replace(/\s*Parc\.\s*\d+\/\d+\s*$/i,'').trim().slice(0,80),
+               valor, tipo:'saida', saldo:null, vencimento: meta.vencimento || null });
+  });
+  return { lancamentos: out, meta };
 }
 
 function extratoCabecalho(t){
@@ -1279,36 +1382,99 @@ async function lerExtrato(){
     const texto = await textoDoPDF(f, 30);
     if(!texto || texto.replace(/\s/g,'').length < 60)
       return statusExtrato('<span style="color:var(--vermelho)">Esse PDF não tem texto (deve ser escaneado). Peça o extrato em PDF direto do banco.</span>');
-    const cab = extratoCabecalho(texto);
+    let cab = extratoCabecalho(texto);
     let linhas = extratoDosItens(itens);            // pelas colunas (preciso)
-    if(linhas.length < 2) linhas = extratoLinhas(texto);   // reserva
+    let fat = null;
+    if(linhas.length < 2 && ehFatura(texto)){
+      const r = faturaDosItens(itens, texto);
+      linhas = r.lancamentos; fat = r.meta;
+      cab = { banco: (fat.bandeira||'Cartão'), conta: fat.final||'', titular: cab.titular||'' };
+    }
+    if(linhas.length < 2 && !fat) linhas = extratoLinhas(texto);   // reserva
     if(!linhas.length){
       const amostra = texto.split(/\n/).filter(x=>x.trim()).slice(3,9).join(' ⏎ ').slice(0,400);
       return statusExtrato('<span style="color:var(--vermelho)">Não reconheci nenhum lançamento nesse arquivo.</span>'+
         '<div style="margin-top:8px;font-size:11.5px;color:var(--fraco)"><b>O que eu li:</b><br>'+esc(amostra)+'</div>');
     }
 
-    // já lançados antes (mesma data + valor + descrição)
-    const jaTem = new Set(S.movimentos.map(m=>m.data_movimento+'|'+Number(m.valor).toFixed(2)+'|'+(m.descricao||'').slice(0,60)));
-    linhas.forEach(l=>{ l.repetido = jaTem.has(l.data+'|'+l.valor.toFixed(2)+'|'+l.descricao.slice(0,60)); });
-
-    _extrato = { cab, linhas };
+    _extrato = { cab, linhas, texto };
+    marcarRepetidos(null);
     const ent = linhas.filter(x=>x.tipo==='entrada'), sai = linhas.filter(x=>x.tipo==='saida');
     const rep = linhas.filter(x=>x.repetido).length;
     const sal = extratoSaldos(texto);
     let conferencia = '';
-    if(sal.inicial != null && sal.final != null){
+    if(fat){
+      const soma = linhas.reduce((s,x)=>s+x.valor,0);
+      const alvo = fat.despesas != null ? fat.despesas : fat.total;
+      const dif = alvo != null ? Math.round((soma-alvo)*100)/100 : null;
+      conferencia = (dif != null && Math.abs(dif) < 0.01)
+        ? '<div class="ok">Fatura do cartão '+esc(fat.bandeira||'')+' final '+esc(fat.final||'—')+
+          ': os lançamentos somam '+brl(soma)+', igual ao total da fatura. Vencimento '+dataBR(fat.vencimento)+'.</div>'
+        : '<div class="erro">Fatura do cartão: os lançamentos somam '+brl(soma)+
+          (alvo!=null? ', mas a fatura diz '+brl(alvo) : '')+'. Confira antes de importar.</div>';
+    }
+    const comSaldo = fat ? [] : linhas.filter(l=>l.saldo != null);
+    if(comSaldo.length >= 2){
+      // confere pela coluna de saldo: cada linha tem que explicar a anterior.
+      // é mais confiável que o "Saldo em ...", cujo sinal alguns bancos não imprimem.
+      const falhas = [];
+      for(let i=1;i<comSaldo.length;i++){
+        const a = comSaldo[i-1], b = comSaldo[i];
+        const esperado = a.saldo + (b.tipo==='entrada' ? b.valor : -b.valor);
+        if(Math.abs(esperado - b.saldo) > 0.01) falhas.push(b);
+      }
+      const ultimo = comSaldo[comSaldo.length-1];
+      const fechaFim = sal.final == null || Math.abs(ultimo.saldo - sal.final) < 0.01;
+      if(!falhas.length && fechaFim){
+        conferencia = '<div class="ok">Conferência: fecha linha a linha com o extrato. Saldo final '+brl(ultimo.saldo)+'.</div>';
+      } else if(falhas.length){
+        const f = falhas[0];
+        conferencia = '<div class="erro">Conferência: <b>'+falhas.length+' linha(s) não batem</b> com a coluna de saldo. '+
+          'A primeira é '+dataBR(f.data)+' — '+esc(f.descricao.slice(0,60))+' ('+brl(f.valor)+'). Confira antes de importar.</div>';
+      } else {
+        conferencia = '<div class="erro">Conferência: as linhas batem entre si, mas o saldo final lido ('+brl(ultimo.saldo)+
+          ') não é o do extrato ('+brl(sal.final)+'). Pode faltar um lançamento no fim.</div>';
+      }
+    } else if(!fat && sal.inicial != null && sal.final != null){
       const calc = sal.inicial + ent.reduce((s,x)=>s+x.valor,0) - sai.reduce((s,x)=>s+x.valor,0);
       const dif = Math.round((calc - sal.final)*100)/100;
       conferencia = Math.abs(dif) < 0.01
         ? '<div class="ok">Conferência: fecha com o extrato. Saldo '+brl(sal.final)+'.</div>'
-        : '<div class="erro">Conferência: <b>não fecha</b> — diferença de '+brl(Math.abs(dif))+
-          '. Deve faltar algum lançamento; confira antes de importar (saldo do extrato: '+brl(sal.final)+', calculado: '+brl(calc)+').</div>';
+        : '<div class="erro">Conferência: <b>não fecha</b> — diferença de '+brl(Math.abs(dif))+'.</div>';
     }
     const nomeSug = [cab.banco, cab.conta].filter(Boolean).join(' · ') || (cab.titular||'Conta');
 
     statusExtrato('Lido do PDF, sem custo de IA.');
-    document.getElementById('ex-corpo').innerHTML =
+    _extrato.render = () => desenharExtrato(conferencia);
+    _extrato.render();
+  }catch(e){ statusExtrato('<span style="color:var(--vermelho)">Não deu para ler: '+esc(e.message)+'</span>'); }
+}
+
+/* marca o que já foi lançado ANTES, na MESMA conta — duas contas podem ter
+   a mesma tarifa no mesmo dia, e isso não é repetição */
+function marcarRepetidos(origemId){
+  if(!_extrato) return;
+  const jaTem = new Set(S.movimentos
+    .filter(m=> !origemId || m.origem_id === origemId)
+    .map(m=> (m.origem_id||'-')+'|'+m.data_movimento+'|'+Number(m.valor).toFixed(2)+'|'+(m.descricao||'').slice(0,60)));
+  _extrato.linhas.forEach(l=>{
+    l.repetido = !!origemId && jaTem.has(origemId+'|'+l.data+'|'+l.valor.toFixed(2)+'|'+l.descricao.slice(0,60));
+  });
+}
+
+function trocouOrigemExtrato(){
+  marcarRepetidos(val('ex-origem') || null);
+  if(_extrato && _extrato.render) _extrato.render();
+}
+
+function desenharExtrato(conferencia){
+  const linhas = _extrato.linhas, cab = _extrato.cab;
+  const ent = linhas.filter(x=>x.tipo==='entrada'), sai = linhas.filter(x=>x.tipo==='saida');
+  const rep = linhas.filter(x=>x.repetido).length;
+  const nomeSug = [cab.banco, cab.conta].filter(Boolean).join(' · ') || (cab.titular||'Conta');
+  const origemSel = val('ex-origem') || '';
+  const empresaSel = val('ex-empresa') || '';
+  document.getElementById('ex-corpo').innerHTML =
       conferencia+
       '<div class="kpis" style="margin:12px 0">'+
         kpi('Lançamentos', linhas.length)+
@@ -1317,13 +1483,13 @@ async function lerExtrato(){
         (rep? kpi('Já lançados', rep+' (serão pulados)') : '')+
       '</div>'+
       '<label>Origem (cartão / conta)</label>'+
-      '<select id="ex-origem"><option value="">— criar nova: '+esc(nomeSug)+' —</option>'+
-        S.origens.map(o=>'<option value="'+o.id+'">'+esc(o.nome)+(o.identificador?' ·'+esc(o.identificador):'')+'</option>').join('')+
+      '<select id="ex-origem" onchange="trocouOrigemExtrato()"><option value="">— criar nova: '+esc(nomeSug)+' —</option>'+
+        S.origens.map(o=>'<option value="'+o.id+'"'+(origemSel===o.id?' selected':'')+'>'+esc(o.nome)+(o.identificador?' ·'+esc(o.identificador):'')+'</option>').join('')+
       '</select>'+
       (cab.titular? '<div style="color:var(--fraco);font-size:12px;margin-top:4px">titular no extrato: '+esc(cab.titular)+'</div>':'')+
-      (ent.length? '<label>Empresa das ENTRADAS (obrigatória — é a regra do sistema)</label>'+
-        '<select id="ex-empresa"><option value="">— não importar as entradas —</option>'+
-          S.empresas.map(e=>'<option value="'+e.id+'">'+esc(e.apelido||e.razao_social)+'</option>').join('')+
+      (ent.length? '<label>Empresa das entradas (opcional — em branco, vão para a fila)</label>'+
+        '<select id="ex-empresa"><option value="">— deixar na fila, apontar depois —</option>'+
+          S.empresas.map(e=>'<option value="'+e.id+'"'+(empresaSel===e.id?' selected':'')+'>'+esc(e.apelido||e.razao_social)+'</option>').join('')+
         '</select>' : '')+
       '<div style="margin-top:14px"><button class="bt" onclick="importarExtrato()">Importar '+linhas.filter(x=>!x.repetido).length+' lançamentos</button></div>'+
       '<div style="max-height:220px;overflow:auto;border:1px solid var(--linha);border-radius:8px;margin-top:12px">'+
@@ -1335,7 +1501,6 @@ async function lerExtrato(){
             (l.tipo==='entrada'?'+':'−')+brl(l.valor).replace('R$','')+'</td></tr>').join('')+
       '</tbody></table></div>'+
       (linhas.length>60? '<div style="color:var(--fraco);font-size:12px;margin-top:6px">mostrando os 60 primeiros de '+linhas.length+'</div>':'');
-  }catch(e){ statusExtrato('<span style="color:var(--vermelho)">Não deu para ler: '+esc(e.message)+'</span>'); }
 }
 
 async function importarExtrato(){
@@ -1345,25 +1510,37 @@ async function importarExtrato(){
 
   if(!origemId){
     const cab = _extrato.cab;
-    const nome = [cab.banco, cab.titular].filter(Boolean).join(' — ') || 'Conta importada';
+    const ehCartao = _extrato.linhas.some(l=>l.vencimento);
+    const nome = [cab.banco, cab.titular].filter(Boolean).join(' — ') || (ehCartao?'Cartão':'Conta importada');
     const { data, error } = await sb.from('origens')
-      .insert({ nome, tipo:'conta', identificador: cab.conta||null, titular: cab.titular||null })
+      .insert({ nome, tipo: ehCartao?'cartao':'conta', identificador: cab.conta||null, titular: cab.titular||null })
       .select().maybeSingle();
-    if(error) return aviso('Não criou a origem: '+error.message,'erro');
-    S.origens.push(data); origemId = data.id;
+    if(error){
+      // já existe uma origem para essa conta: usa ela em vez de reclamar
+      const { data:achada } = await sb.from('origens').select('*')
+        .eq('identificador', cab.conta||'').limit(1);
+      let ja = (achada && achada[0]) || S.origens.find(o=>
+        (o.identificador||'') === (cab.conta||'') || norm(o.nome) === norm(nome));
+      if(!ja) return aviso('Não criou a origem: '+error.message,'erro');
+      if(!S.origens.find(o=>o.id===ja.id)) S.origens.push(ja);
+      origemId = ja.id;
+      statusExtrato('Usando a conta já cadastrada: '+esc(ja.nome)+'.');
+    } else {
+      S.origens.push(data); origemId = data.id;
+    }
   }
 
+  marcarRepetidos(origemId);
   const novos = _extrato.linhas.filter(l=>!l.repetido)
-    .filter(l=> l.tipo==='saida' || empresaEnt )
     .map(l=>{
+      const daFatura = !!l.vencimento;
       const base = { tipo:l.tipo, origem_id:origemId, valor:l.valor, data_movimento:l.data,
                      descricao:l.descricao, fornecedor:l.contraparte||null,
-                     pago:true, data_pagamento:l.data, criado_por:S.user.id };
-      if(l.tipo==='entrada') base.empresa_id = empresaEnt;
-      else {
-        const sug = sugerirEmpresa({ fornecedor:l.contraparte, origem_id:origemId });
-        if(sug) base.empresa_id = sug;
-      }
+                     pago: !daFatura, data_pagamento: daFatura ? null : l.data,
+                     vencimento: l.vencimento || null, criado_por:S.user.id };
+      const sug = sugerirEmpresa({ fornecedor:l.contraparte, origem_id:origemId });
+      if(l.tipo==='entrada' && empresaEnt) base.empresa_id = empresaEnt;
+      else if(sug) base.empresa_id = sug;
       return base;
     });
 
@@ -1380,7 +1557,7 @@ async function importarExtrato(){
     statusExtrato('Gravando… '+gravados+' de '+novos.length);
   }
   _extrato = null; S.modal = null;
-  aviso(gravados+' lançamentos importados. As saídas sem empresa estão em "Apontar depois".','ok');
+  aviso(gravados+' lançamentos importados. O que ficou sem empresa está em "Apontar depois".','ok');
 }
 
 function abrirOrigem(id){
@@ -1486,7 +1663,7 @@ async function acaoUsuario(acao, id, extra){
 Object.assign(window, {
   entrar, sair, salvarChave, trocarTema, definirNome, limparNome, irPara, abrirCaixa, abrirLancamento, salvarMovimento, editarMov,
   alternarPago, excluirMov, lerDocumento, verAnexo, fecharModal,
-  abrirEmpresa, abrirEmpresaAnexo, lerDocEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem, abrirExtrato, lerExtrato, importarExtrato,
+  abrirEmpresa, abrirEmpresaAnexo, lerDocEmpresa, salvarEmpresa, abrirOrigem, salvarOrigem, abrirExtrato, lerExtrato, importarExtrato, trocouOrigemExtrato,
   abrirUsuario, salvarUsuario, acaoUsuario, apontar, mascaraCNPJ, S, render
 });
 
